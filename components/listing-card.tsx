@@ -1,4 +1,7 @@
-import { ExternalLink, MapPin, Gauge, Calendar } from 'lucide-react'
+'use client'
+
+import { useState } from 'react'
+import { ExternalLink, MapPin, Gauge, Calendar, Car } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CarListing } from '@/lib/scrapers/types'
@@ -8,6 +11,7 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing }: ListingCardProps) {
+  const [imageError, setImageError] = useState(false)
   const formatPrice = (price: number | null) => {
     if (price === null) return 'Contact for price'
     return new Intl.NumberFormat('en-US', {
@@ -25,21 +29,19 @@ export function ListingCard({ listing }: ListingCardProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg group">
       <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-        {listing.imageUrl ? (
+        {listing.imageUrl && !imageError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={listing.imageUrl}
             alt={listing.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
-            onError={(e) => {
-              // Hide broken images
-              (e.target as HTMLImageElement).style.display = 'none'
-            }}
+            onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            <span className="text-sm">No image</span>
+          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground bg-gradient-to-br from-muted to-muted/50">
+            <Car className="h-12 w-12 mb-2 opacity-50" />
+            <span className="text-xs">No image available</span>
           </div>
         )}
         <div
