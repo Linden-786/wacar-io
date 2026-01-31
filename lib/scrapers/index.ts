@@ -1,48 +1,39 @@
-import { CarListing, SearchParams, ScraperResult } from './types'
+import { SearchParams, ScraperResult, CarListing } from './types'
 import { scrapeCraigslist } from './craigslist'
 import { scrapeEbayMotors } from './ebay-motors'
-import { getSampleListings } from './sample-data'
-import { closeBrowser } from './browser'
 
 export type { CarListing, SearchParams, ScraperResult }
 
-export interface AggregatedResults {
+export async function scrapeAllSources(params: SearchParams): Promise<{
   listings: CarListing[]
-  sources: {
-    name: string
-    count: number
-    error?: string
-  }[]
-  totalCount: number
-  usingSampleData?: boolean
-}
+  sources: { name: string; count: number; error?: string }[]
+}> {
+  // Run scrapers in parallel
+  const results = await Promise.allSettled([
+    scrapeCraigslist(params),
+    scrapeEbayMotors(params),
+  ])
 
-export async function scrapeAllSources(params: SearchParams): Promise<AggregatedResults> {
-  let craigslistResult: ScraperResult = { listings: [] }
-  let ebayResult: ScraperResult = { listings: [] }
+  const allListings: CarListing[] = []
+  const sources: { name: string; count: number; error?: string }[] = []
 
-  try {
-    // Run scrapers sequentially to avoid browser conflicts
-    craigslistResult = await scrapeCraigslist(params)
-    ebayResult = await scrapeEbayMotors(params)
-  } catch (error) {
-    console.error('Scraping error:', error)
-  } finally {
-    // Clean up browser
-    await closeBrowser().catch(() => {})
-  }
-
-  // Combine all listings
-  const allListings: CarListing[] = [
-    ...craigslistResult.listings,
-    ...ebayResult.listings,
-  ]
-
-  // If no real results, use sample data for demo purposes
-  const usingSampleData = allListings.length === 0
-  if (usingSampleData) {
-    const sampleListings = getSampleListings(params)
-    allListings.push(...sampleListings)
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      const { source, listings, error } = result.value
+      allListings.push(...listings)
+      sources.push({
+        name: source,
+        count: listings.length,
+        error,
+      })
+    } else {
+      // Handle rejected promise
+      sources.push({
+        name: 'Unknown',
+        count: 0,
+        error: result.reason?.message || 'Failed to fetch',
+      })
+    }
   }
 
   // Sort by price (lowest first), with null prices at the end
@@ -53,25 +44,5 @@ export async function scrapeAllSources(params: SearchParams): Promise<Aggregated
     return a.price - b.price
   })
 
-  return {
-    listings: allListings,
-    sources: [
-      {
-        name: 'Craigslist',
-        count: craigslistResult.listings.length,
-        error: craigslistResult.error,
-      },
-      {
-        name: 'eBay Motors',
-        count: ebayResult.listings.length,
-        error: ebayResult.error,
-      },
-    ],
-    totalCount: allListings.length,
-    usingSampleData,
-  }
+  return { listings: allListings, sources }
 }
-
-// Re-export individual scrapers for testing
-export { scrapeCraigslist } from './craigslist'
-export { scrapeEbayMotors } from './ebay-motors'

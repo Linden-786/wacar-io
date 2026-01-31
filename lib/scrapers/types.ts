@@ -1,5 +1,8 @@
 export interface CarListing {
   id: string
+  source: string
+  sourceUrl: string
+  sourceLogo?: string
   title: string
   price: number | null
   year: number | null
@@ -8,10 +11,8 @@ export interface CarListing {
   mileage: number | null
   location: string | null
   imageUrl: string | null
-  listingUrl: string
-  source: string
-  sourceColor: string
-  postedDate: string | null
+  description?: string
+  postedAt?: string
 }
 
 export interface SearchParams {
@@ -26,9 +27,11 @@ export interface SearchParams {
   mileageMax?: number
   zipCode?: string
   radius?: number
+  condition?: 'new' | 'used' | 'all'
 }
 
 export interface ScraperResult {
+  source: string
   listings: CarListing[]
   error?: string
 }

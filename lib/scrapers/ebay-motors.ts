@@ -1,152 +1,127 @@
+import * as cheerio from 'cheerio'
 import { CarListing, SearchParams, ScraperResult } from './types'
-import { getPage } from './browser'
 
 export async function scrapeEbayMotors(params: SearchParams): Promise<ScraperResult> {
-  let page = null
+  const listings: CarListing[] = []
 
   try {
-    const searchUrl = buildEbayUrl(params)
-    console.log('Scraping eBay Motors:', searchUrl)
+    const keywords: string[] = []
+    if (params.makeName) keywords.push(params.makeName)
+    if (params.modelName) keywords.push(params.modelName)
 
-    page = await getPage()
-    await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 30000 })
+    const urlParams = new URLSearchParams()
+    if (keywords.length > 0) {
+      urlParams.set('_nkw', keywords.join(' '))
+    }
 
-    // Wait for listings to load
-    await page.waitForSelector('.s-item', { timeout: 10000 }).catch(() => null)
+    urlParams.set('_sacat', '6001') // Cars & Trucks category
+    urlParams.set('LH_ItemCondition', '3000') // Used
+    urlParams.set('_sop', '12') // Sort by newly listed
 
-    // Scroll to load lazy images
-    await page.evaluate(() => {
-      window.scrollBy(0, 1000)
+    if (params.priceMin) urlParams.set('_udlo', params.priceMin.toString())
+    if (params.priceMax) urlParams.set('_udhi', params.priceMax.toString())
+    if (params.zipCode) urlParams.set('_stpos', params.zipCode)
+    if (params.radius) urlParams.set('_sadis', params.radius.toString())
+
+    const url = `https://www.ebay.com/sch/Cars-Trucks/6001/i.html?${urlParams.toString()}`
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+      },
+      redirect: 'manual', // Don't follow redirects to detect challenges
     })
-    await new Promise(resolve => setTimeout(resolve, 1000))
 
-    // Extract listings
-    const listings = await page.evaluate((makeName, modelName) => {
-      const results: any[] = []
+    // eBay often redirects to CAPTCHA challenge
+    if (response.status === 307 || response.status === 302) {
+      return {
+        source: 'eBay Motors',
+        listings: [],
+        error: 'eBay requires verification - use redirect link',
+      }
+    }
 
-      const items = document.querySelectorAll('.s-item')
+    if (!response.ok) {
+      throw new Error(`eBay returned ${response.status}`)
+    }
 
-      items.forEach((item, index) => {
-        if (index >= 20) return // Limit to 20
+    const html = await response.text()
 
-        try {
-          // Skip placeholder items
-          if (item.classList.contains('s-item__pl-on-bottom')) return
+    // Check if we hit a challenge page
+    if (html.includes('challenge') || html.includes('captcha') || html.includes('splashui')) {
+      return {
+        source: 'eBay Motors',
+        listings: [],
+        error: 'eBay requires verification - use redirect link',
+      }
+    }
 
-          // Get title and link
-          const linkEl = item.querySelector('.s-item__link') as HTMLAnchorElement
-          const titleEl = item.querySelector('.s-item__title')
+    const $ = cheerio.load(html)
 
-          if (!linkEl || !titleEl) return
+    // eBay search result items
+    $('.s-item').each((_, element) => {
+      try {
+        const $el = $(element)
+        const $link = $el.find('.s-item__link').first()
+        const href = $link.attr('href') || ''
 
-          const href = linkEl.href || ''
-          const title = titleEl.textContent?.trim() || ''
+        if (!href || href.includes('pulsar')) return
 
-          // Skip non-car items
-          if (!href || !title || title.toLowerCase().includes('shop on ebay')) return
+        const title = $el.find('.s-item__title').text().trim()
+        if (!title || title === 'Shop on eBay') return
 
-          // Get price
-          const priceEl = item.querySelector('.s-item__price')
-          const priceText = priceEl?.textContent?.trim() || ''
-          const priceMatch = priceText.match(/\$?([\d,]+)/)
-          const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null
+        const priceText = $el.find('.s-item__price').text().trim()
+        const price = priceText ? parseInt(priceText.replace(/[$,]/g, '').split(' ')[0]) : null
 
-          // Skip if price too low (likely parts)
-          if (price && price < 1000) return
+        const location = $el.find('.s-item__location, .s-item__itemLocation').text().trim().replace(/^from\s*/i, '')
 
-          // Get image
-          let imageUrl: string | null = null
-          const imgEl = item.querySelector('.s-item__image-wrapper img, .s-item__image img') as HTMLImageElement
-          if (imgEl) {
-            // Get the actual src, not placeholder
-            imageUrl = imgEl.src || imgEl.dataset.src || null
-            // Skip placeholder/loading images
-            if (imageUrl && (imageUrl.includes('gif') || imageUrl.includes('data:'))) {
-              imageUrl = imgEl.dataset.src || null
-            }
+        const imageUrl = $el.find('.s-item__image-img').attr('src') ||
+                         $el.find('.s-item__image-img').attr('data-src') || null
+
+        const yearMatch = title.match(/\b(19|20)\d{2}\b/)
+        const year = yearMatch ? parseInt(yearMatch[0]) : null
+
+        const mileageMatch = title.match(/(\d{1,3}[,\d]*)\s*(?:mi|miles|k\s*mi)/i)
+        let mileage = null
+        if (mileageMatch) {
+          const mileageStr = mileageMatch[1].replace(/,/g, '')
+          mileage = parseInt(mileageStr)
+          if (mileageMatch[0].toLowerCase().includes('k')) {
+            mileage *= 1000
           }
-
-          // Get location
-          const locEl = item.querySelector('.s-item__location, .s-item__itemLocation')
-          const location = locEl?.textContent?.replace('from ', '').trim() || null
-
-          // Get mileage from subtitle if available
-          const subtitleEl = item.querySelector('.s-item__subtitle')
-          const subtitleText = subtitleEl?.textContent || ''
-          const mileageMatch = subtitleText.match(/([\d,]+)\s*(?:miles|mi)/i)
-          const mileage = mileageMatch ? parseInt(mileageMatch[1].replace(/,/g, '')) : null
-
-          // Parse year from title
-          const yearMatch = title.match(/\b(19[89]\d|20[0-2]\d)\b/)
-          const year = yearMatch ? parseInt(yearMatch[1]) : null
-
-          // Extract item ID from URL
-          const itemIdMatch = href.match(/\/itm\/(\d+)/)
-          const id = `ebay-${itemIdMatch ? itemIdMatch[1] : Date.now() + index}`
-
-          results.push({
-            id,
-            title: title.replace(/\s*-\s*New Listing\s*$/i, '').trim(),
-            price,
-            year,
-            make: makeName || null,
-            model: modelName || null,
-            mileage,
-            location,
-            imageUrl,
-            listingUrl: href.split('?')[0],
-            source: 'eBay Motors',
-            sourceColor: '#e53238',
-            postedDate: null,
-          })
-        } catch (e) {
-          // Skip malformed items
         }
-      })
 
-      return results
-    }, params.makeName, params.modelName)
+        if (title && href) {
+          listings.push({
+            id: `ebay-${href.split('/itm/')[1]?.split('?')[0] || Math.random().toString(36)}`,
+            source: 'eBay Motors',
+            sourceUrl: href.split('?')[0],
+            title: title.replace('New Listing', '').trim(),
+            price: (price !== null && !isNaN(price)) ? price : null,
+            year,
+            make: params.makeName || null,
+            model: params.modelName || null,
+            mileage,
+            location: location || null,
+            imageUrl,
+          })
+        }
+      } catch (e) {
+        // Skip malformed listing
+      }
+    })
 
-    await page.close()
-
-    console.log(`eBay Motors: Found ${listings.length} listings`)
-    return { listings: listings as CarListing[] }
-
+    return { source: 'eBay Motors', listings: listings.slice(0, 20) }
   } catch (error) {
-    console.error('eBay Motors scraper error:', error)
-    if (page) await page.close().catch(() => {})
-    return { listings: [], error: 'Failed to fetch eBay Motors listings' }
+    return {
+      source: 'eBay Motors',
+      listings: [],
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
   }
-}
-
-function buildEbayUrl(params: SearchParams): string {
-  const baseUrl = 'https://www.ebay.com/sch/Cars-Trucks/6001/i.html'
-  const searchParams = new URLSearchParams()
-
-  // Build search keywords
-  const keywords: string[] = []
-  if (params.makeName) keywords.push(params.makeName)
-  if (params.modelName) keywords.push(params.modelName)
-  if (keywords.length > 0) {
-    searchParams.set('_nkw', keywords.join(' '))
-  }
-
-  // Price filters
-  if (params.priceMin) searchParams.set('_udlo', params.priceMin.toString())
-  if (params.priceMax) searchParams.set('_udhi', params.priceMax.toString())
-
-  // Location
-  if (params.zipCode) {
-    searchParams.set('_stpos', params.zipCode)
-    searchParams.set('_sadis', (params.radius || 100).toString())
-    searchParams.set('LH_PrefLoc', '99')
-  }
-
-  // Sort by newly listed
-  searchParams.set('_sop', '10')
-
-  // Only used cars
-  searchParams.set('LH_ItemCondition', '3000')
-
-  return `${baseUrl}?${searchParams.toString()}`
 }
