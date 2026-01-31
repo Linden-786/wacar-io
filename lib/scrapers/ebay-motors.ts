@@ -1,101 +1,120 @@
-import * as cheerio from 'cheerio'
 import { CarListing, SearchParams, ScraperResult } from './types'
+import { getPage } from './browser'
 
 export async function scrapeEbayMotors(params: SearchParams): Promise<ScraperResult> {
+  let page = null
+
   try {
     const searchUrl = buildEbayUrl(params)
+    console.log('Scraping eBay Motors:', searchUrl)
 
-    const response = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-      next: { revalidate: 300 }, // Cache for 5 minutes
+    page = await getPage()
+    await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 30000 })
+
+    // Wait for listings to load
+    await page.waitForSelector('.s-item', { timeout: 10000 }).catch(() => null)
+
+    // Scroll to load lazy images
+    await page.evaluate(() => {
+      window.scrollBy(0, 1000)
     })
+    await new Promise(resolve => setTimeout(resolve, 1000))
 
-    if (!response.ok) {
-      return { listings: [], error: `eBay Motors returned ${response.status}` }
-    }
+    // Extract listings
+    const listings = await page.evaluate((makeName, modelName) => {
+      const results: any[] = []
 
-    const html = await response.text()
-    const $ = cheerio.load(html)
-    const listings: CarListing[] = []
+      const items = document.querySelectorAll('.s-item')
 
-    // eBay search results - use combined selector
-    const selector = '.srp-results .s-item, .b-list__items_nofooter li.s-item, ul.srp-results li.s-item, .srp-river-results .s-item'
+      items.forEach((item, index) => {
+        if (index >= 20) return // Limit to 20
 
-    $(selector).each((_, element) => {
-      try {
-        const $el = $(element)
+        try {
+          // Skip placeholder items
+          if (item.classList.contains('s-item__pl-on-bottom')) return
 
-        // Skip placeholder items
-        if ($el.hasClass('s-item__pl-on-bottom')) return
+          // Get title and link
+          const linkEl = item.querySelector('.s-item__link') as HTMLAnchorElement
+          const titleEl = item.querySelector('.s-item__title')
 
-        // Get title and link
-        const $titleLink = $el.find('.s-item__link, a.s-item__link').first()
-        const href = $titleLink.attr('href') || ''
-        const title = $el.find('.s-item__title, .s-item__title span').first().text().trim()
+          if (!linkEl || !titleEl) return
 
-        // Skip "Shop on eBay" type entries
-        if (!href || !title || title.toLowerCase().includes('shop on ebay')) return
+          const href = linkEl.href || ''
+          const title = titleEl.textContent?.trim() || ''
 
-        // Get price
-        const priceText = $el.find('.s-item__price').first().text().trim()
-        const priceMatch = priceText.match(/\$?([\d,]+)/)
-        const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null
+          // Skip non-car items
+          if (!href || !title || title.toLowerCase().includes('shop on ebay')) return
 
-        // Skip if price seems unreasonable for a car (likely parts)
-        if (price && price < 500) return
+          // Get price
+          const priceEl = item.querySelector('.s-item__price')
+          const priceText = priceEl?.textContent?.trim() || ''
+          const priceMatch = priceText.match(/\$?([\d,]+)/)
+          const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null
 
-        // Get image
-        let imageUrl = $el.find('.s-item__image-wrapper img').attr('src') || null
-        if (!imageUrl) {
-          imageUrl = $el.find('.s-item__image img').attr('src') || null
+          // Skip if price too low (likely parts)
+          if (price && price < 1000) return
+
+          // Get image
+          let imageUrl: string | null = null
+          const imgEl = item.querySelector('.s-item__image-wrapper img, .s-item__image img') as HTMLImageElement
+          if (imgEl) {
+            // Get the actual src, not placeholder
+            imageUrl = imgEl.src || imgEl.dataset.src || null
+            // Skip placeholder/loading images
+            if (imageUrl && (imageUrl.includes('gif') || imageUrl.includes('data:'))) {
+              imageUrl = imgEl.dataset.src || null
+            }
+          }
+
+          // Get location
+          const locEl = item.querySelector('.s-item__location, .s-item__itemLocation')
+          const location = locEl?.textContent?.replace('from ', '').trim() || null
+
+          // Get mileage from subtitle if available
+          const subtitleEl = item.querySelector('.s-item__subtitle')
+          const subtitleText = subtitleEl?.textContent || ''
+          const mileageMatch = subtitleText.match(/([\d,]+)\s*(?:miles|mi)/i)
+          const mileage = mileageMatch ? parseInt(mileageMatch[1].replace(/,/g, '')) : null
+
+          // Parse year from title
+          const yearMatch = title.match(/\b(19[89]\d|20[0-2]\d)\b/)
+          const year = yearMatch ? parseInt(yearMatch[1]) : null
+
+          // Extract item ID from URL
+          const itemIdMatch = href.match(/\/itm\/(\d+)/)
+          const id = `ebay-${itemIdMatch ? itemIdMatch[1] : Date.now() + index}`
+
+          results.push({
+            id,
+            title: title.replace(/\s*-\s*New Listing\s*$/i, '').trim(),
+            price,
+            year,
+            make: makeName || null,
+            model: modelName || null,
+            mileage,
+            location,
+            imageUrl,
+            listingUrl: href.split('?')[0],
+            source: 'eBay Motors',
+            sourceColor: '#e53238',
+            postedDate: null,
+          })
+        } catch (e) {
+          // Skip malformed items
         }
-        // Skip placeholder images
-        if (imageUrl && imageUrl.includes('gif')) {
-          imageUrl = $el.find('.s-item__image-wrapper img').attr('data-src') || imageUrl
-        }
+      })
 
-        // Get location
-        const location = $el.find('.s-item__location').text().replace('from ', '').trim() || null
+      return results
+    }, params.makeName, params.modelName)
 
-        // Get mileage if shown
-        const detailsText = $el.find('.s-item__subtitle').text()
-        const mileageMatch = detailsText.match(/([\d,]+)\s*(?:miles|mi)/i)
-        const mileage = mileageMatch ? parseInt(mileageMatch[1].replace(/,/g, '')) : null
+    await page.close()
 
-        // Parse year from title
-        const parsed = parseCarTitle(title)
+    console.log(`eBay Motors: Found ${listings.length} listings`)
+    return { listings: listings as CarListing[] }
 
-        // Extract item ID from URL
-        const itemIdMatch = href.match(/\/itm\/(\d+)/)
-        const id = `ebay-${itemIdMatch ? itemIdMatch[1] : Date.now()}`
-
-        listings.push({
-          id,
-          title: cleanTitle(title),
-          price,
-          year: parsed.year,
-          make: parsed.make || params.makeName || null,
-          model: parsed.model || params.modelName || null,
-          mileage,
-          location,
-          imageUrl,
-          listingUrl: href.split('?')[0], // Clean URL
-          source: 'eBay Motors',
-          sourceColor: '#e53238',
-          postedDate: null,
-        })
-      } catch (e) {
-        // Skip malformed listings
-      }
-    })
-
-    return { listings: listings.slice(0, 20) } // Limit to 20 results
   } catch (error) {
     console.error('eBay Motors scraper error:', error)
+    if (page) await page.close().catch(() => {})
     return { listings: [], error: 'Failed to fetch eBay Motors listings' }
   }
 }
@@ -120,51 +139,14 @@ function buildEbayUrl(params: SearchParams): string {
   if (params.zipCode) {
     searchParams.set('_stpos', params.zipCode)
     searchParams.set('_sadis', (params.radius || 100).toString())
-    searchParams.set('LH_PrefLoc', '99') // Items within radius
+    searchParams.set('LH_PrefLoc', '99')
   }
 
-  // Year filter - eBay uses Model Year aspect
-  if (params.yearMin) {
-    searchParams.set('Model%20Year', `${params.yearMin}-${params.yearMax || new Date().getFullYear() + 1}`)
-  }
+  // Sort by newly listed
+  searchParams.set('_sop', '10')
 
-  // Sort by best match
-  searchParams.set('_sop', '12')
-
-  // Only show items with images
-  searchParams.set('LH_ItemCondition', '3000') // Used vehicles
+  // Only used cars
+  searchParams.set('LH_ItemCondition', '3000')
 
   return `${baseUrl}?${searchParams.toString()}`
-}
-
-function parseCarTitle(title: string): { year: number | null; make: string | null; model: string | null } {
-  const currentYear = new Date().getFullYear()
-  const yearMatch = title.match(/\b(19[89]\d|20[0-2]\d)\b/)
-  const year = yearMatch ? parseInt(yearMatch[1]) : null
-
-  const makes = [
-    'Toyota', 'Honda', 'Ford', 'Chevrolet', 'Chevy', 'BMW', 'Mercedes', 'Audi',
-    'Nissan', 'Hyundai', 'Kia', 'Mazda', 'Subaru', 'Volkswagen', 'VW', 'Jeep',
-    'Dodge', 'Ram', 'GMC', 'Lexus', 'Acura', 'Infiniti', 'Porsche', 'Tesla',
-    'Cadillac', 'Buick', 'Chrysler', 'Lincoln', 'Volvo', 'Land Rover', 'Jaguar'
-  ]
-
-  let make: string | null = null
-  const titleLower = title.toLowerCase()
-  for (const m of makes) {
-    if (titleLower.includes(m.toLowerCase())) {
-      make = m === 'Chevy' ? 'Chevrolet' : m === 'VW' ? 'Volkswagen' : m
-      break
-    }
-  }
-
-  return { year, make, model: null }
-}
-
-function cleanTitle(title: string): string {
-  // Remove common eBay suffixes
-  return title
-    .replace(/\s*-\s*New Listing\s*$/i, '')
-    .replace(/\s*\(.*?\)\s*$/, '')
-    .trim()
 }

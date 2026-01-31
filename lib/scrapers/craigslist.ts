@@ -1,93 +1,112 @@
-import * as cheerio from 'cheerio'
 import { CarListing, SearchParams, ScraperResult } from './types'
+import { getPage } from './browser'
 
 export async function scrapeCraigslist(params: SearchParams): Promise<ScraperResult> {
+  let page = null
+
   try {
     const searchUrl = buildCraigslistUrl(params)
+    console.log('Scraping Craigslist:', searchUrl)
 
-    const response = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-      next: { revalidate: 300 }, // Cache for 5 minutes
-    })
+    page = await getPage()
+    await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 30000 })
 
-    if (!response.ok) {
-      return { listings: [], error: `Craigslist returned ${response.status}` }
-    }
+    // Wait for listings to load
+    await page.waitForSelector('.cl-static-search-result, .cl-search-result, .result-row', { timeout: 10000 }).catch(() => null)
 
-    const html = await response.text()
-    const $ = cheerio.load(html)
-    const listings: CarListing[] = []
+    // Extract listings using page.evaluate
+    const listings = await page.evaluate((makeName, modelName) => {
+      const results: any[] = []
 
-    // Craigslist search results structure
-    $('li.cl-static-search-result, li.cl-search-result').each((_, element) => {
-      try {
-        const $el = $(element)
+      // Try multiple selectors for different Craigslist layouts
+      const items = document.querySelectorAll('.cl-static-search-result, .cl-search-result, .result-row, li.result')
 
-        // Get the link and title
-        const $link = $el.find('a.cl-app-anchor, a.titlestring, a[href*="/cto/"]').first()
-        const href = $link.attr('href') || ''
-        const title = $link.text().trim() || $el.find('.title, .titlestring').text().trim()
+      items.forEach((item, index) => {
+        if (index >= 20) return // Limit to 20
 
-        if (!href || !title) return
+        try {
+          // Get link and title
+          const linkEl = item.querySelector('a.cl-app-anchor, a.titlestring, a.result-title, a[href*="/cto/"]') as HTMLAnchorElement
+          if (!linkEl) return
 
-        // Get price
-        const priceText = $el.find('.price, .priceinfo').text().trim()
-        const priceMatch = priceText.match(/\$?([\d,]+)/)
-        const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null
+          const href = linkEl.href || ''
+          const title = linkEl.textContent?.trim() || ''
+          if (!href || !title) return
 
-        // Get location
-        const location = $el.find('.location, .meta').text().trim() || null
+          // Get price
+          const priceEl = item.querySelector('.price, .result-price, .priceinfo')
+          const priceText = priceEl?.textContent?.trim() || ''
+          const priceMatch = priceText.match(/\$?([\d,]+)/)
+          const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null
 
-        // Get image
-        let imageUrl = $el.find('img').attr('src') || null
-        // Craigslist sometimes uses data-src for lazy loading
-        if (!imageUrl) {
-          imageUrl = $el.find('img').attr('data-src') || null
+          // Get location
+          const locEl = item.querySelector('.location, .result-hood, .meta')
+          const location = locEl?.textContent?.trim().replace(/[()]/g, '') || null
+
+          // Get image - try multiple approaches
+          let imageUrl: string | null = null
+          const imgEl = item.querySelector('img') as HTMLImageElement
+          if (imgEl) {
+            imageUrl = imgEl.src || imgEl.dataset.src || null
+            // Skip data URIs (placeholder images)
+            if (imageUrl && imageUrl.startsWith('data:')) {
+              imageUrl = null
+            }
+            // Convert thumbnail to larger image
+            if (imageUrl && imageUrl.includes('50x50')) {
+              imageUrl = imageUrl.replace('50x50', '600x450')
+            }
+            // Ensure we get higher resolution images
+            if (imageUrl && imageUrl.includes('300x300')) {
+              imageUrl = imageUrl.replace('300x300', '600x450')
+            }
+          }
+
+          // Parse year from title
+          const yearMatch = title.match(/\b(19[89]\d|20[0-2]\d)\b/)
+          const year = yearMatch ? parseInt(yearMatch[1]) : null
+
+          // Generate ID from URL
+          const idMatch = href.match(/\/(\d+)\.html/)
+          const id = `cl-${idMatch ? idMatch[1] : Date.now() + index}`
+
+          results.push({
+            id,
+            title,
+            price,
+            year,
+            make: makeName || null,
+            model: modelName || null,
+            mileage: null,
+            location,
+            imageUrl,
+            listingUrl: href,
+            source: 'Craigslist',
+            sourceColor: '#5b2d8e',
+            postedDate: null,
+          })
+        } catch (e) {
+          // Skip malformed items
         }
-        // Convert thumbnail to larger image if possible
-        if (imageUrl && imageUrl.includes('50x50')) {
-          imageUrl = imageUrl.replace('50x50', '600x450')
-        }
+      })
 
-        // Parse year, make, model from title
-        const parsed = parseCarTitle(title)
+      return results
+    }, params.makeName, params.modelName)
 
-        // Generate unique ID
-        const id = `cl-${href.split('/').pop()?.replace('.html', '') || Date.now()}`
+    await page.close()
 
-        listings.push({
-          id,
-          title,
-          price,
-          year: parsed.year,
-          make: parsed.make || params.makeName || null,
-          model: parsed.model || params.modelName || null,
-          mileage: null, // Craigslist doesn't show mileage in search results
-          location,
-          imageUrl,
-          listingUrl: href.startsWith('http') ? href : `https://craigslist.org${href}`,
-          source: 'Craigslist',
-          sourceColor: '#5b2d8e',
-          postedDate: null,
-        })
-      } catch (e) {
-        // Skip malformed listings
-      }
-    })
+    console.log(`Craigslist: Found ${listings.length} listings`)
+    return { listings: listings as CarListing[] }
 
-    return { listings: listings.slice(0, 20) } // Limit to 20 results
   } catch (error) {
     console.error('Craigslist scraper error:', error)
+    if (page) await page.close().catch(() => {})
     return { listings: [], error: 'Failed to fetch Craigslist listings' }
   }
 }
 
 function buildCraigslistUrl(params: SearchParams): string {
-  // Use sfc (San Francisco) as default region for demo, can be made dynamic with zipcode lookup
+  // Use SF Bay Area as default region
   const baseUrl = 'https://sfbay.craigslist.org/search/cta'
   const searchParams = new URLSearchParams()
 
@@ -104,37 +123,9 @@ function buildCraigslistUrl(params: SearchParams): string {
   if (params.priceMin) searchParams.set('min_price', params.priceMin.toString())
   if (params.priceMax) searchParams.set('max_price', params.priceMax.toString())
   if (params.mileageMax) searchParams.set('max_auto_miles', params.mileageMax.toString())
-  if (params.zipCode) searchParams.set('postal', params.zipCode)
-  if (params.radius) searchParams.set('search_distance', params.radius.toString())
 
   // Request results with images
   searchParams.set('hasPic', '1')
 
   return `${baseUrl}?${searchParams.toString()}`
-}
-
-function parseCarTitle(title: string): { year: number | null; make: string | null; model: string | null } {
-  // Try to extract year (4-digit number between 1980 and current year + 1)
-  const currentYear = new Date().getFullYear()
-  const yearMatch = title.match(/\b(19[89]\d|20[0-2]\d)\b/)
-  const year = yearMatch ? parseInt(yearMatch[1]) : null
-
-  // Common makes to look for
-  const makes = [
-    'Toyota', 'Honda', 'Ford', 'Chevrolet', 'Chevy', 'BMW', 'Mercedes', 'Audi',
-    'Nissan', 'Hyundai', 'Kia', 'Mazda', 'Subaru', 'Volkswagen', 'VW', 'Jeep',
-    'Dodge', 'Ram', 'GMC', 'Lexus', 'Acura', 'Infiniti', 'Porsche', 'Tesla',
-    'Cadillac', 'Buick', 'Chrysler', 'Lincoln', 'Volvo', 'Land Rover', 'Jaguar'
-  ]
-
-  let make: string | null = null
-  const titleLower = title.toLowerCase()
-  for (const m of makes) {
-    if (titleLower.includes(m.toLowerCase())) {
-      make = m === 'Chevy' ? 'Chevrolet' : m === 'VW' ? 'Volkswagen' : m
-      break
-    }
-  }
-
-  return { year, make, model: null }
 }

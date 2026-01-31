@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { scrapeAllSources, SearchParams } from '@/lib/scrapers'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 30 // Allow up to 30 seconds for scraping
+export const maxDuration = 60 // Allow up to 60 seconds for Puppeteer scraping
 
 export async function GET(request: NextRequest) {
   try {

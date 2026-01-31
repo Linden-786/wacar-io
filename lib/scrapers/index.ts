@@ -2,6 +2,7 @@ import { CarListing, SearchParams, ScraperResult } from './types'
 import { scrapeCraigslist } from './craigslist'
 import { scrapeEbayMotors } from './ebay-motors'
 import { getSampleListings } from './sample-data'
+import { closeBrowser } from './browser'
 
 export type { CarListing, SearchParams, ScraperResult }
 
@@ -17,11 +18,19 @@ export interface AggregatedResults {
 }
 
 export async function scrapeAllSources(params: SearchParams): Promise<AggregatedResults> {
-  // Run scrapers in parallel
-  const [craigslistResult, ebayResult] = await Promise.all([
-    scrapeCraigslist(params),
-    scrapeEbayMotors(params),
-  ])
+  let craigslistResult: ScraperResult = { listings: [] }
+  let ebayResult: ScraperResult = { listings: [] }
+
+  try {
+    // Run scrapers sequentially to avoid browser conflicts
+    craigslistResult = await scrapeCraigslist(params)
+    ebayResult = await scrapeEbayMotors(params)
+  } catch (error) {
+    console.error('Scraping error:', error)
+  } finally {
+    // Clean up browser
+    await closeBrowser().catch(() => {})
+  }
 
   // Combine all listings
   const allListings: CarListing[] = [
