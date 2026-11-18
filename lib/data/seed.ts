@@ -2,6 +2,7 @@
 // prices and histories are generated so the product can be exercised end to
 // end before a licensed listings feed is connected (see lib/data/store.ts).
 import { EXT_COLORS, INT_COLORS, INT_WEIGHTS, MAKES, MODELS, OPTION_POOL, WMI, type ModelDef } from './catalog'
+import { EXOTIC } from './catalog-extra'
 import type { Dealer, InstalledOption, Listing, PreviousSeller, PricePoint } from './types'
 
 function mulberry32(seed: number) {
@@ -53,7 +54,7 @@ const INDIE_SUFFIX = ['Auto Sales', 'Motors', 'Pre-Owned', 'Auto Outlet', 'Car C
 const STREETS = ['Main St', 'Auto Mall Pkwy', 'Commerce Dr', 'Highway 1', 'Motor Row', 'Industrial Blvd', 'Central Ave', 'Dealer Way']
 const YEAR_CODE: Record<number, string> = { 2016: 'G', 2017: 'H', 2018: 'J', 2019: 'K', 2020: 'L', 2021: 'M', 2022: 'N', 2023: 'P', 2024: 'R', 2025: 'S', 2026: 'T' }
 const VIN_CHARS = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789'
-const HALO = /Type R|TRD Pro|Raptor|GT3|Turbo S|Z06|392|CS|Dark Horse|ZR2/
+const HALO = /Type R|TRD Pro|Raptor|GT3|GT4|Turbo S|Z06|ZL1|392|^CS$|Dark Horse|ZR2|Hellcat|TRX|Blackwing|Nismo|Quadrifoglio|Circuit Edition/
 
 function vinCheckDigit(vin: string) {
   const map: Record<string, number> = { A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, J: 1, K: 2, L: 3, M: 4, N: 5, P: 7, R: 9, S: 2, T: 3, U: 4, V: 5, W: 6, X: 7, Y: 8, Z: 9 }
@@ -67,7 +68,7 @@ function vinCheckDigit(vin: string) {
   return r === 10 ? 'X' : String(r)
 }
 
-export const SEED_VERSION = 4
+export const SEED_VERSION = 5
 
 export interface Store {
   listings: Listing[]
@@ -78,7 +79,7 @@ export interface Store {
 
 // Most generated listings are already sold: a steady market over the 150-day
 // history window needs roughly 3.5 sales for every car still on the lot.
-export function buildStore(count = 25000): Store {
+export function buildStore(count = 46000): Store {
   const rnd = mulberry32(20261117)
   const pick = <T,>(arr: T[]) => arr[Math.floor(rnd() * arr.length)]
   const between = (a: number, b: number) => a + rnd() * (b - a)
@@ -95,6 +96,14 @@ export function buildStore(count = 25000): Store {
   // ---- dealers
   const dealers: Dealer[] = []
   const usedNames = new Set<string>()
+  const dealerMake = new Map<string, string>()
+  // franchises are handed out in proportion to how much of the market each make is
+  const share = new Map<string, number>()
+  for (const m of MODELS) share.set(m.make, (share.get(m.make) ?? 0) + m.weight)
+  const totalShare = Array.from(share.values()).reduce((a, b) => a + b, 0)
+  const makeCycle: string[] = []
+  for (const make of MAKES) for (let n = Math.max(2, Math.round((share.get(make)! / totalShare) * 460)); n > 0; n--) makeCycle.push(make)
+  for (let i = makeCycle.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [makeCycle[i], makeCycle[j]] = [makeCycle[j], makeCycle[i]] }
   let makeCursor = 0
   CITIES.forEach(([city, state, zip, lat, lng, size], ci) => {
     const mk = (base: string, type: Dealer['type'], group: string | null) => {
@@ -112,19 +121,20 @@ export function buildStore(count = 25000): Store {
         phone: `(${Math.floor(between(201, 989))}) 555-${String(Math.floor(between(100, 9999))).padStart(4, '0')}`,
         docFee: Math.round(between(85, 999) / 5) * 5,
       })
+      return dealers[dealers.length - 1].id
     }
-    const nFranchise = 2 + size
+    const nFranchise = 4 + size * 2
     for (let i = 0; i < nFranchise; i++) {
-      const make = MAKES[makeCursor++ % MAKES.length]
+      const make = makeCycle[makeCursor++ % makeCycle.length]
       const group = rnd() < 0.35 ? GROUPS[(ci + i) % GROUPS.length] : null
-      mk(`${group ? group.split(' ')[0] : city} ${make}${group ? ` of ${city}` : ''}`, 'franchise', group)
+      dealerMake.set(mk(`${group ? group.split(' ')[0] : city} ${make}${group ? ` of ${city}` : ''}`, 'franchise', group), make)
     }
     for (let i = 0; i < Math.ceil(size / 2); i++) mk(`${pick(INDIE)} ${pick(INDIE_SUFFIX)}`, 'independent', null)
     if (ci % 14 === 0) mk(`${ci % 28 === 0 ? 'DriveDirect' : 'Carloop'} Online ${city}`, 'online', ci % 28 === 0 ? 'DriveDirect' : 'Carloop')
   })
   const dealerById = new Map(dealers.map((d) => [d.id, d]))
   const franchiseByMake = new Map<string, Dealer[]>()
-  for (const make of MAKES) franchiseByMake.set(make, dealers.filter((d) => d.type === 'franchise' && d.name.includes(` ${make}`)))
+  for (const make of MAKES) franchiseByMake.set(make, dealers.filter((d) => dealerMake.get(d.id) === make))
   const usedDealers = dealers
   const usedWeights = dealers.map((d) => (d.type === 'franchise' ? 1 : d.type === 'online' ? 4 : 1.4))
 
@@ -134,7 +144,9 @@ export function buildStore(count = 25000): Store {
   const modelWeights = MODELS.map((m) => m.weight)
 
   for (let i = 0; i < count; i++) {
-    const m: ModelDef = weighted(MODELS, modelWeights)
+    // the first few passes give every model a handful of cars for sale, so nothing in the catalog comes up empty
+    const forced = i < MODELS.length * 4 ? MODELS[i % MODELS.length] : null
+    const m: ModelDef = forced ?? weighted(MODELS, modelWeights)
     const firstYear = m.gens[0].from
     const r = rnd()
     let condition: Listing['condition'] = r < 0.3 ? 'new' : r < 0.42 ? 'certified' : 'used'
@@ -177,7 +189,7 @@ export function buildStore(count = 25000): Store {
     else miles = Math.max(900, Math.round((age + between(-0.3, 0.7)) * between(7000, 15500)))
     if (condition === 'certified') miles = Math.min(miles, 68000)
 
-    const halo = HALO.test(trim.name) || m.make === 'Porsche'
+    const halo = HALO.test(trim.name) || EXOTIC.has(m.make)
     let price: number
     if (condition === 'new') price = msrp * between(halo ? 1.0 : 0.9, halo ? 1.12 : 1.03)
     else {
@@ -192,7 +204,7 @@ export function buildStore(count = 25000): Store {
       ? weighted(usedDealers, usedWeights)
       : pick(franchiseByMake.get(m.make)!.length ? franchiseByMake.get(m.make)! : dealers)
 
-    const sold = rnd() < 0.78
+    const sold = !forced && rnd() < 0.78
     const soldDay = sold ? Math.floor(between(1, 150)) : null
     const duration = Math.floor(-Math.log(1 - rnd() * 0.985) * 42)
     const daysListed = (soldDay ?? 0) + duration

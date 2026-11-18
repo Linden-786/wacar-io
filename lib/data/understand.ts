@@ -6,8 +6,8 @@ import { getStore, locateZip } from './query'
 
 export interface Interpretation { label: string; query: string; kind: 'search' | 'listing' | 'dealer' }
 
-const MAKE_ALIASES: Record<string, string> = { chevy: 'Chevrolet', vw: 'Volkswagen', bimmer: 'BMW', beemer: 'BMW', subie: 'Subaru' }
-const BODY: Record<string, string> = { suv: 'SUV', suvs: 'SUV', crossover: 'SUV', sedan: 'Sedan', sedans: 'Sedan', truck: 'Pickup', trucks: 'Pickup', pickup: 'Pickup', coupe: 'Coupe', wagon: 'Wagon', hatchback: 'Hatchback', hatch: 'Hatchback', convertible: 'Convertible', roadster: 'Convertible' }
+const MAKE_ALIASES: Record<string, string> = { chevy: 'Chevrolet', vw: 'Volkswagen', bimmer: 'BMW', beemer: 'BMW', subie: 'Subaru', mercedes: 'Mercedes-Benz', benz: 'Mercedes-Benz', merc: 'Mercedes-Benz', lambo: 'Lamborghini', landrover: 'Land Rover', rolls: 'Rolls-Royce', alfa: 'Alfa Romeo', aston: 'Aston Martin', caddy: 'Cadillac' }
+const BODY: Record<string, string> = { suv: 'SUV', suvs: 'SUV', crossover: 'SUV', sedan: 'Sedan', sedans: 'Sedan', truck: 'Pickup', trucks: 'Pickup', pickup: 'Pickup', coupe: 'Coupe', wagon: 'Wagon', minivan: 'Minivan', minivans: 'Minivan', van: 'Van', vans: 'Van', hatchback: 'Hatchback', hatch: 'Hatchback', convertible: 'Convertible', roadster: 'Convertible' }
 const DRIVE: Record<string, string> = { awd: 'AWD', '4wd': '4WD', '4x4': '4WD', fwd: 'FWD', rwd: 'RWD' }
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '')
@@ -79,10 +79,14 @@ export function understand(input: string): Interpretation[] {
     }
     return false
   }
-  const model = [...MODELS].sort((a, b) => b.model.length - a.model.length).find((m) => eat(m.model) || (m.model === 'MX-5 Miata' && (eat('miata') || eat('mx5'))) || (m.model === 'Golf GTI' && eat('gti')) || (m.model === 'Silverado 1500' && eat('silverado')) || (m.model === 'Mustang Mach-E' && eat('mache')))
-  let make = model?.make
-  for (const [alias, name] of Object.entries(MAKE_ALIASES)) if (eat(alias)) make ??= name
-  for (const m of MODELS) if (eat(m.make)) make ??= m.make
+  // make first, so short or numeric model names ("IS", "Z", "1500") only match alongside their make
+  let make: string | undefined
+  for (const m of Array.from(new Set(MODELS.map((x) => x.make))).sort((a, b) => b.length - a.length)) if (!make && eat(m)) make = m
+  for (const [alias, name] of Object.entries(MAKE_ALIASES)) if (!make && eat(alias)) make = name
+  const ambiguous = (name: string) => name !== '911' && (/^[A-Za-z]{1,2}$/.test(name) || /^\d+$/.test(name))
+  const model = MODELS.filter((m) => (make ? m.make === make : !ambiguous(m.model))).sort((a, b) => b.model.length - a.model.length)
+    .find((m) => eat(m.model) || (m.model === 'MX-5 Miata' && (eat('miata') || eat('mx5'))) || (m.model === 'Golf GTI' && eat('gti')) || (m.model === 'Silverado 1500' && eat('silverado')) || (m.model === 'Mustang Mach-E' && eat('mache')) || (m.model === 'Sierra 1500' && eat('sierra')) || (m.model === 'Corvette' && eat('vette')))
+  make ??= model?.make
   if (make) p.set('make', make)
   let trimHit: string | undefined
   if (model) {

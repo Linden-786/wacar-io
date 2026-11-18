@@ -1,3 +1,4 @@
+import { EXTRA_MODELS, EXTRA_WMI } from './catalog-extra'
 // Vehicle catalog used to generate the demo inventory. Values are approximate
 // and exist only to make the sample market behave plausibly.
 
@@ -46,7 +47,8 @@ const DSL = (engine: string, cyl: number, drives: string[], add = 4500): Powertr
 const t = (...pairs: [string, number][]) => pairs.map(([name, add]) => ({ name, add }))
 const g = (...triples: [string, number, number][]) => triples.map(([name, from, to]) => ({ name, from, to }))
 
-export const MODELS: ModelDef[] = [
+/** Models described in full detail; the rest of the market comes from catalog-extra.ts. */
+const DETAILED: ModelDef[] = [
   { make: 'Toyota', model: 'RAV4', body: 'SUV', seats: 5, doors: 4, base: 29500, weight: 10,
     gens: g(['4th gen (XA40)', 2016, 2018], ['5th gen (XA50)', 2019, 2026]),
     trims: t(['LE', 0], ['XLE', 1800], ['XLE Premium', 4200], ['Adventure', 5800], ['Limited', 8600]),
@@ -229,6 +231,8 @@ export const MODELS: ModelDef[] = [
     plant: 'Wolfsburg, DE', country: 'Germany' },
 ]
 
+export const MODELS: ModelDef[] = [...DETAILED, ...EXTRA_MODELS.filter((x) => !DETAILED.some((d) => d.make === x.make && d.model === x.model))]
+
 export const EXT_COLORS: { base: string; hex: string; names: string[]; weight: number }[] = [
   { base: 'White', hex: '#f4f4f2', names: ['Glacier White', 'Pearl White', 'Summit White', 'Oxford White'], weight: 22 },
   { base: 'Black', hex: '#17181a', names: ['Midnight Black', 'Jet Black', 'Obsidian', 'Agate Black'], weight: 19 },
@@ -271,6 +275,7 @@ export const BODIES = Array.from(new Set(MODELS.map((m) => m.body))).sort()
 export const WMI: Record<string, string> = {
   Toyota: '4T1', Honda: '1HG', Ford: '1FT', Chevrolet: '1GC', Tesla: '5YJ', BMW: 'WBA', Subaru: '4S4',
   Hyundai: '5NM', Kia: '5XY', Jeep: '1C4', Porsche: 'WP0', Mazda: 'JM3', Rivian: '7PD', Volkswagen: 'WVW',
+  ...EXTRA_WMI,
 }
 
 export const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
