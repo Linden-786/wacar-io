@@ -7,6 +7,8 @@ import { MAKES, MODELS, findModel, slug } from '@/lib/data/catalog'
 import { getStore, groupSummary, marketSummary, weeklySeries } from '@/lib/data/query'
 import type { Listing } from '@/lib/data/types'
 import { dateOf, money, num, pct } from '@/lib/format'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 export const dynamic = 'force-dynamic'
 type Props = { params: { slug?: string[] } }
@@ -64,12 +66,12 @@ export default function Research({ params }: Props) {
         <nav className="text-sm text-muted-foreground">{crumbs.map(([text, href], i) => <span key={href}>{i > 0 && ' / '}<Link href={href} className="hover:underline">{text}</Link></span>)}</nav>
         <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
           <h1 className="text-3xl font-bold tracking-tight">Used {name} prices</h1>
-          <Link href={`/search/listings?${q}`} className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground">See {num(all.active)} for sale</Link>
+          <Button asChild size="sm" className="font-semibold"><Link href={`/search/listings?${q}`}>See {num(all.active)} for sale</Link></Button>
         </div>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Asking prices from dealer listings over the last five months. Sold counts are estimated from listings leaving the market.</p>
       </div>
 
-      {all.active + all.sold30 === 0 ? <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">No used listings for this selection yet.</p> : (
+      {all.active + all.sold30 === 0 ? <Card className="border-dashed p-8 text-center text-muted-foreground shadow-none">No used listings for this selection yet.</Card> : (
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <Stat label="Average asking price" value={money(all.avgPrice)} sub={`${pct(all.change30)} in 30 days`} />
@@ -78,10 +80,10 @@ export default function Research({ params }: Props) {
             <Stat label="Sold in 30 days" value={num(all.sold30)} sub={all.daysSupply == null ? '' : `${all.daysSupply} days of supply`} />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-lg border bg-card p-3"><h2 className="mb-1 text-sm font-semibold">Average asking price</h2><LineChart title="Average asking price by week" points={series.map((s) => ({ label: label(s.day), value: s.avgPrice }))} /></div>
-            <div className="rounded-lg border bg-card p-3"><h2 className="mb-1 text-sm font-semibold">Average miles</h2><LineChart kind="count" title="Average miles by week" points={series.map((s) => ({ label: label(s.day), value: s.avgMiles }))} /></div>
-            <div className="rounded-lg border bg-card p-3"><h2 className="mb-1 text-sm font-semibold">Inventory</h2><LineChart kind="count" title="Inventory by week" points={series.map((s) => ({ label: label(s.day), value: s.count }))} /></div>
-            <div className="rounded-lg border bg-card p-3"><h2 className="mb-1 text-sm font-semibold">Newly listed each week</h2><BarChart title="New listings by week" bars={series.map((s) => ({ label: label(s.day), value: s.listed }))} /></div>
+            <Card className="p-3 shadow-none"><h2 className="mb-1 text-sm font-semibold">Average asking price</h2><LineChart title="Average asking price by week" points={series.map((s) => ({ label: label(s.day), value: s.avgPrice }))} /></Card>
+            <Card className="p-3 shadow-none"><h2 className="mb-1 text-sm font-semibold">Average miles</h2><LineChart kind="count" title="Average miles by week" points={series.map((s) => ({ label: label(s.day), value: s.avgMiles }))} /></Card>
+            <Card className="p-3 shadow-none"><h2 className="mb-1 text-sm font-semibold">Inventory</h2><LineChart kind="count" title="Inventory by week" points={series.map((s) => ({ label: label(s.day), value: s.count }))} /></Card>
+            <Card className="p-3 shadow-none"><h2 className="mb-1 text-sm font-semibold">Newly listed each week</h2><BarChart title="New listings by week" bars={series.map((s) => ({ label: label(s.day), value: s.listed }))} /></Card>
           </div>
         </>
       )}

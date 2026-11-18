@@ -1,8 +1,8 @@
 // Rule-based plain-language search: "awd hybrid suv under 40k near 43017"
 // becomes a filter query. No model calls; just the catalog and some patterns.
 import { EXT_COLORS, INT_COLORS, MODELS } from './catalog'
-import { summarize } from './filters'
-import { getStore } from './query'
+import { encodeValue, summarize } from './filters'
+import { getStore, locateZip } from './query'
 
 export interface Interpretation { label: string; query: string; kind: 'search' | 'listing' | 'dealer' }
 
@@ -37,19 +37,25 @@ export function understand(input: string): Interpretation[] {
   }
 
   take(/within (\d{1,3}) ?(?:mi|miles)\b/, (m) => p.set('radius', m[1]))
-  take(/(?:near|in|around|from)? ?\b(\d{5})\b/, (m) => { p.set('zip', m[1]); if (!p.get('radius')) p.set('radius', '100') })
+  // a ZIP needs a cue word; bare five-digit numbers are handled after prices and mileage
+  take(/\b(?:near|in|around|from|of) (\d{5})\b/, (m) => { p.set('zip', m[1]); if (!p.get('radius')) p.set('radius', '100') })
   take(/(?:under|below|less than|max|<) ?(\d[\d.]*) ?(k)? ?(?:mi|miles)\b/, (m) => p.set('miles_max', String(num(m[1], m[2]))))
   take(/(?:over|above|more than|min|>) ?(\d[\d.]*) ?(k)? ?(?:mi|miles)\b/, (m) => p.set('miles_min', String(num(m[1], m[2]))))
   take(/\$?(\d[\d.]*) ?(k)? ?(?:-|to) ?\$?(\d[\d.]*) ?(k)\b/, (m) => { p.set('price_min', String(num(m[1], m[2] ?? m[4]))); p.set('price_max', String(num(m[3], m[4]))) })
+  take(/\$?(\d{4,6}) ?(?:-|to) ?\$?(\d{4,6})\b/, (m) => { if (Number(m[1]) > 2100 || Number(m[2]) > 2100) { p.set('price_min', m[1]); p.set('price_max', m[2]) } else { p.set('year_min', m[1]); p.set('year_max', m[2]) } })
   take(/(?:under|below|less than|max|<) ?\$?(\d[\d.]*) ?(k)?\b/, (m) => p.set('price_max', String(num(m[1], m[2] ?? (Number(m[1]) < 1000 ? 'k' : undefined)))))
   take(/(?:over|above|more than|min|>) ?\$?(\d[\d.]*) ?(k)?\b/, (m) => p.set('price_min', String(num(m[1], m[2] ?? (Number(m[1]) < 1000 ? 'k' : undefined)))))
   take(/\b(20[12]\d) ?(?:-|to) ?(20[12]\d)\b/, (m) => { p.set('year_min', m[1]); p.set('year_max', m[2]) })
   take(/\b(20[12]\d)\b/, (m) => p.set('year', m[1]))
+  if (!p.get('zip')) {
+    const bare = s.match(/\b(\d{5})\b/)
+    if (bare && locateZip(bare[1])) { p.set('zip', bare[1]); p.set('radius', p.get('radius') ?? '100'); s = s.replace(bare[0], ' ') }
+  }
 
   const conds: string[] = []
-  if (take(/\b(certified|cpo)\b/, () => {})) conds.push('Certified')
+  if (take(/\b(certified pre-?owned|certified|cpo)\b/, () => {})) conds.push('Certified')
   if (take(/\b(used|pre-?owned)\b/, () => {})) conds.push('Used')
-  if (take(/\bnew\b/, () => {})) conds.push('New')
+  if (take(/\bnew\b(?! (?:york|jersey|orleans|mexico|hampshire|haven))/, () => {})) conds.push('New')
   if (conds.length) p.set('condition', conds.join(','))
 
   take(/\b(plug-?in(?: hybrid)?|phev)\b/, () => p.set('fuel', 'Plug-in Hybrid'))
@@ -87,7 +93,7 @@ export function understand(input: string): Interpretation[] {
   // generation codes such as "g80", "c8", "jl", "xa50"
   const gens = MODELS.filter((m) => !make || m.make === make).filter((m) => !model || m === model)
   outer: for (const m of gens) for (const gen of m.gens) {
-    const codes = [gen.name.match(/\(([^)]+)\)/)?.[1], /^[A-Z0-9.]{2,6}$/.test(gen.name) ? gen.name : null].filter(Boolean) as string[]
+    const codes = [gen.name.match(/\(([^)]+)\)/)?.[1], /^[A-Za-z0-9.]{2,6}$/.test(gen.name) ? gen.name : null].filter(Boolean) as string[]
     for (const code of codes) if (eat(code)) { p.set('make', m.make); p.set('model', m.model); p.set('generation', gen.name); break outer }
   }
   for (const w of [...words]) {
@@ -109,7 +115,7 @@ export function understand(input: string): Interpretation[] {
     const names = new Set<string>()
     for (const d of store.dealers) {
       if (names.size >= 3) break
-      if (norm(d.name).includes(needle) && !names.has(d.name)) { names.add(d.name); out.push({ kind: 'dealer', label: `Dealer: ${d.name} (${d.city}, ${d.state})`, query: new URLSearchParams({ dealer: d.name }).toString() }) }
+      if (norm(d.name).includes(needle) && !names.has(d.name)) { names.add(d.name); out.push({ kind: 'dealer', label: `Dealer: ${d.name} (${d.city}, ${d.state})`, query: new URLSearchParams({ dealer: encodeValue(d.name) }).toString() }) }
     }
     const city = store.dealers.find((d) => norm(d.city) === needle)
     if (city) out.push({ kind: 'search', label: `Cars near ${city.city}, ${city.state}`, query: new URLSearchParams({ zip: city.zip, radius: '50' }).toString() })

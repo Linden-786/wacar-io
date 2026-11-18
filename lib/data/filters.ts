@@ -93,9 +93,12 @@ export const SORTS: { value: string; label: string }[] = [
   { value: 'closest', label: 'Closest to me' },
 ]
 
-const split = (v: string | null | undefined) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])
+/** Multi-value params are comma separated, so a comma inside a value is escaped. */
+export const encodeValue = (v: string) => v.replace(/%/g, '%25').replace(/,/g, '%2C')
+const decodeValue = (v: string) => v.replace(/%2C/g, ',').replace(/%25/g, '%')
+const split = (v: string | null | undefined) => (v ? v.split(',').map((s) => decodeValue(s.trim())).filter(Boolean) : [])
 
-/** Read a multi-value param. Values are comma separated; commas never appear in values. */
+/** Read a multi-value param. */
 export const getValues = (p: URLSearchParams, key: string) => split(p.get(key))
 
 export function toggleValue(p: URLSearchParams, key: string, value: string) {
@@ -103,7 +106,7 @@ export function toggleValue(p: URLSearchParams, key: string, value: string) {
   const cur = getValues(next, key)
   const has = cur.includes(value)
   const out = has ? cur.filter((v) => v !== value) : [...cur, value]
-  if (out.length) next.set(key, out.join(','))
+  if (out.length) next.set(key, out.map(encodeValue).join(','))
   else next.delete(key)
   // dependent selections are meaningless once their parent changes
   if (key === 'make') ['model', 'generation', 'trim', 'version'].forEach((k) => { next.delete(k); next.delete(`exclude_${k}`) })

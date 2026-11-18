@@ -6,6 +6,7 @@ import { Bookmark, Building2, Car, History, Search } from 'lucide-react'
 import { useRecentSearches, useSavedSearches } from '@/lib/client-store'
 import type { Interpretation } from '@/lib/data/understand'
 import { cn } from '@/lib/utils'
+import { Input } from '@/components/ui/input'
 
 interface Row { label: string; href: string; icon: 'search' | 'listing' | 'dealer' | 'recent' | 'saved'; remember?: boolean }
 
@@ -62,7 +63,7 @@ export function SearchBox({ large, autoFocus }: { large?: boolean; autoFocus?: b
   return (
     <div ref={box} className="relative w-full">
       <Search className={cn('pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground', large ? 'h-5 w-5' : 'h-4 w-4')} />
-      <input
+      <Input
         value={q}
         autoFocus={autoFocus}
         onChange={(e) => { setQ(e.target.value); setOpen(true) }}
@@ -70,7 +71,16 @@ export function SearchBox({ large, autoFocus }: { large?: boolean; autoFocus?: b
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(rows.length - 1, a + 1)) }
           else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)) }
-          else if (e.key === 'Enter' && rows[active]) go(rows[active])
+          else if (e.key === 'Enter') {
+            e.preventDefault()
+            if (!pending && rows[active]) go(rows[active])
+            else if (needle) {
+              fetch(`/api/understand?q=${encodeURIComponent(q)}`).then((r) => r.json()).then((d: { interpretations: Interpretation[] }) => {
+                const i = d.interpretations[0]
+                if (i) go({ label: i.label, href: i.kind === 'listing' ? `/search/listings/${i.query}` : `/search/listings?${i.query}`, icon: i.kind, remember: i.kind !== 'listing' })
+              }).catch(() => {})
+            }
+          }
           else if (e.key === 'Escape') setOpen(false)
         }}
         role="combobox"
@@ -79,8 +89,8 @@ export function SearchBox({ large, autoFocus }: { large?: boolean; autoFocus?: b
         aria-label="Search vehicles"
         placeholder={large ? 'Try "awd hybrid suv under 40k near 43215", a VIN, or a dealer' : 'Search model, VIN, dealer…'}
         className={cn(
-          'w-full rounded-lg border bg-background pr-3 outline-none ring-ring transition-shadow placeholder:text-muted-foreground focus:ring-2',
-          large ? 'h-14 pl-11 text-base shadow-sm' : 'h-9 pl-9 text-sm',
+          'rounded-lg pr-3',
+          large ? 'h-14 pl-11 text-base shadow-sm' : 'h-9 pl-9',
         )}
       />
       {open && rows.length > 0 && (

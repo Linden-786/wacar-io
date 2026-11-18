@@ -15,5 +15,5 @@ export function ago(days: number) {
 
 /** Calendar date for "N days ago", formatted for display. */
 export function dateOf(daysAgo: number, opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' }) {
-  return new Date(Date.now() - daysAgo * 86400000).toLocaleDateString('en-US', opts)
+  return new Date(Date.now() - daysAgo * 86400000).toLocaleDateString('en-US', { ...opts, timeZone: 'UTC' })
 }

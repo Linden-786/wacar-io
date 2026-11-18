@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Check } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const metadata: Metadata = { title: 'Wacar Plus' }
 
@@ -13,12 +15,16 @@ export default function PlusPage() {
       <p className="mt-2 max-w-2xl text-muted-foreground">Plus is the planned paid tier for deeper build and history data. Checkout is not open yet, so during the preview every Plus feature below is switched on for everyone.</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {[{ name: 'Free', price: '$0', items: FREE, note: 'No ads. No selling your contact details to dealers.' }, { name: 'Plus', price: 'Pricing to be announced', items: PLUS, note: 'Included for everyone during the preview.' }].map((t) => (
-          <section key={t.name} className={`rounded-xl border bg-card p-6 ${t.name === 'Plus' ? 'border-primary' : ''}`}>
-            <h2 className="text-lg font-semibold">{t.name}</h2>
-            <p className="text-2xl font-bold">{t.price}</p>
-            <p className="text-sm text-muted-foreground">{t.note}</p>
-            <ul className="mt-4 space-y-2 text-sm">{t.items.map((i) => <li key={i} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{i}</li>)}</ul>
-          </section>
+          <Card key={t.name} className={t.name === 'Plus' ? 'border-primary' : ''}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">{t.name}{t.name === 'Plus' && <Badge>Open during preview</Badge>}</CardTitle>
+              <p className="text-2xl font-bold">{t.price}</p>
+              <CardDescription>{t.note}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">{t.items.map((i) => <li key={i} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{i}</li>)}</ul>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -8,6 +9,9 @@ import { findModel, slug } from '@/lib/data/catalog'
 import { safety } from '@/lib/data/nhtsa'
 import { groupSummary, marketSummary, modelRows, toView, weeklySeries } from '@/lib/data/query'
 import { dateOf, money, num, pct } from '@/lib/format'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 export const dynamic = 'force-dynamic'
 type Props = { params: { make: string; model: string } }
@@ -17,7 +21,12 @@ export function generateMetadata({ params }: Props): Metadata {
   return { title: m ? `${m.make} ${m.model} market overview` : 'Model not found' }
 }
 
-export default async function Overview({ params }: Props) {
+async function SafetyRows({ make, model, years }: { make: string; model: string; years: number[] }) {
+  const nhtsa = await Promise.all(years.map(async (y) => ({ year: y, ...(await safety(make, model, y)) })))
+  return <>{nhtsa.map((n) => <TableRow key={n.year}><TableCell className="font-medium">{n.year}</TableCell><TableCell className="text-right tabular-nums">{n.recalls?.length ?? 'unavailable'}</TableCell><TableCell className="text-right tabular-nums">{n.complaints?.toLocaleString('en-US') ?? 'unavailable'}</TableCell></TableRow>)}</>
+}
+
+export default function Overview({ params }: Props) {
   const m = findModel(params.make, params.model)
   if (!m) notFound()
   const rows = modelRows(m.make, m.model)
@@ -26,7 +35,6 @@ export default async function Overview({ params }: Props) {
   const series = weeklySeries(rows)
   const latest = rows.filter((l) => l.status === 'active').sort((a, b) => a.daysListed - b.daysListed).slice(0, 4)
   const years = Array.from(new Set(rows.map((l) => l.year))).sort((a, b) => b - a)
-  const nhtsa = await Promise.all(years.slice(0, 4).map(async (y) => ({ year: y, ...(await safety(m.make, m.model, y)) })))
   const label = (d: number) => dateOf(d, { month: 'short', day: 'numeric' })
 
   return (
@@ -38,8 +46,8 @@ export default async function Overview({ params }: Props) {
           <p className="mt-1 text-sm text-muted-foreground">{m.body} · {m.seats} seats · assembled in {m.plant}, {m.country}</p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/research/used-car-prices/${slug(m.make)}/${slug(m.model)}`} className="inline-flex h-9 items-center rounded-md border px-3 text-sm font-medium hover:bg-secondary">Used price research</Link>
-          <Link href={`/search/listings?${q}`} className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground">See {num(all.active)} for sale</Link>
+          <Button asChild variant="outline" size="sm"><Link href={`/research/used-car-prices/${slug(m.make)}/${slug(m.model)}`}>Used price research</Link></Button>
+          <Button asChild size="sm" className="font-semibold"><Link href={`/search/listings?${q}`}>See {num(all.active)} for sale</Link></Button>
         </div>
       </div>
 
@@ -51,8 +59,8 @@ export default async function Overview({ params }: Props) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border bg-card p-3"><h2 className="mb-1 text-sm font-semibold">Inventory</h2><LineChart kind="count" title="Inventory over time" points={series.map((s) => ({ label: label(s.day), value: s.count }))} /></div>
-        <div className="rounded-lg border bg-card p-3"><h2 className="mb-1 text-sm font-semibold">Average asking price</h2><LineChart title="Average asking price over time" points={series.map((s) => ({ label: label(s.day), value: s.avgPrice }))} /></div>
+        <Card className="p-3 shadow-none"><h2 className="mb-1 text-sm font-semibold">Inventory</h2><LineChart kind="count" title="Inventory over time" points={series.map((s) => ({ label: label(s.day), value: s.count }))} /></Card>
+        <Card className="p-3 shadow-none"><h2 className="mb-1 text-sm font-semibold">Average asking price</h2><LineChart title="Average asking price over time" points={series.map((s) => ({ label: label(s.day), value: s.avgPrice }))} /></Card>
       </div>
 
       <MarketTable title="By generation" first="Generation" rows={groupSummary(rows, (l) => l.generation).sort((a, b) => b.key.localeCompare(a.key)).map((r) => ({ ...r, href: `/search/listings?${q}&generation=${encodeURIComponent(r.key)}` }))} hide={['miles', 'sell']} />
@@ -61,12 +69,12 @@ export default async function Overview({ params }: Props) {
 
       <section>
         <h2 className="mb-2 text-lg font-semibold">Safety record <span className="text-sm font-normal text-muted-foreground">from NHTSA</span></h2>
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs text-muted-foreground"><tr><th className="px-3 py-2 text-left font-medium">Model year</th><th className="px-3 py-2 text-right font-medium">Recalls</th><th className="px-3 py-2 text-right font-medium">Complaints</th></tr></thead>
-            <tbody>{nhtsa.map((n) => <tr key={n.year} className="border-t"><td className="px-3 py-2 font-medium">{n.year}</td><td className="px-3 py-2 text-right tabular-nums">{n.recalls?.length ?? 'unavailable'}</td><td className="px-3 py-2 text-right tabular-nums">{n.complaints?.toLocaleString('en-US') ?? 'unavailable'}</td></tr>)}</tbody>
-          </table>
-        </div>
+        <Card className="overflow-hidden shadow-none">
+          <Table>
+            <TableHeader className="bg-muted/50"><TableRow><TableHead>Model year</TableHead><TableHead className="text-right">Recalls</TableHead><TableHead className="text-right">Complaints</TableHead></TableRow></TableHeader>
+            <TableBody><Suspense fallback={<TableRow><TableCell colSpan={3} className="text-muted-foreground">Loading NHTSA records…</TableCell></TableRow>}><SafetyRows make={m.make} model={m.model} years={years.slice(0, 4)} /></Suspense></TableBody>
+          </Table>
+        </Card>
       </section>
 
       <section>

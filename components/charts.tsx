@@ -1,6 +1,7 @@
 // Small dependency-free SVG charts. They render on the server and inherit
 // theme colors through currentColor / CSS variables.
 import { compactMoney, compactNum } from '@/lib/format'
+import { Card, CardContent } from '@/components/ui/card'
 
 const W = 560, H = 200, PAD = { l: 46, r: 12, t: 12, b: 24 }
 
@@ -97,10 +98,12 @@ export function Scatter({ points, highlight, title }: { points: { miles: number;
 
 export function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-lg border bg-card p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-xl font-semibold tabular-nums">{value}</div>
-      {sub && <div className="text-xs text-muted-foreground">{sub}</div>}
-    </div>
+    <Card className="shadow-none">
+      <CardContent className="p-3">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className="mt-0.5 text-xl font-semibold tabular-nums">{value}</div>
+        {sub && <div className="text-xs text-muted-foreground">{sub}</div>}
+      </CardContent>
+    </Card>
   )
 }

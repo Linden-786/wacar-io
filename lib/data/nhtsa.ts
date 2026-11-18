@@ -6,7 +6,8 @@ export interface Safety { recalls: Recall[] | null; complaints: number | null }
 async function get(url: string) {
   try {
     const res = await fetch(url, { next: { revalidate: 86400 }, signal: AbortSignal.timeout(6000) })
-    if (!res.ok) return null
+    // NHTSA answers 400 with a normal body when a vehicle simply has no records
+    if (!res.ok && res.status !== 400) return null
     return (await res.json()) as { results?: Record<string, string>[]; count?: number; Count?: number }
   } catch {
     return null
@@ -20,8 +21,8 @@ export async function safety(make: string, model: string, year: number): Promise
     get(`https://api.nhtsa.gov/complaints/complaintsByVehicle?${q}`),
   ])
   return {
-    recalls: r?.results
-      ? r.results.map((x) => ({ id: x.NHTSACampaignNumber, date: x.ReportReceivedDate, component: x.Component, summary: x.Summary, remedy: x.Remedy }))
+    recalls: r
+      ? (r.results ?? []).map((x) => ({ id: x.NHTSACampaignNumber, date: x.ReportReceivedDate, component: x.Component, summary: x.Summary, remedy: x.Remedy }))
       : null,
     complaints: c ? c.count ?? c.Count ?? c.results?.length ?? 0 : null,
   }

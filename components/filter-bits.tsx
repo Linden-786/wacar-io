@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Bookmark, BookmarkCheck, X } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useSavedSearches } from '@/lib/client-store'
 import { describe, filterParams, summarize } from '@/lib/data/filters'
 
@@ -21,18 +26,22 @@ export function ActiveChips({ params, onChange }: { params: URLSearchParams; onC
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {chips.map((c) => (
-        <button key={c.key} type="button" onClick={() => onChange(c.remove(params))} className="inline-flex items-center gap-1 rounded-full border bg-secondary px-2.5 py-1 text-xs font-medium hover:bg-secondary/70">
+        <Badge key={c.key} variant="secondary" className="gap-1 py-1 pr-1 font-medium">
           {c.label}
-          <X className="h-3 w-3 text-muted-foreground" aria-label="Remove filter" />
-        </button>
+          <button type="button" aria-label={`Remove filter ${c.label}`} onClick={() => onChange(c.remove(params))} className="rounded-full p-0.5 text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
       ))}
-      <button
+      <Button
         type="button"
+        variant="link"
+        size="sm"
+        className="h-auto px-1.5 py-0 text-xs text-muted-foreground"
         onClick={() => { const keep = new URLSearchParams(); ['sort', 'layout', 'map'].forEach((k) => params.get(k) && keep.set(k, params.get(k)!)); onChange(keep) }}
-        className="px-1.5 text-xs text-muted-foreground underline-offset-2 hover:underline"
       >
         Clear all
-      </button>
+      </Button>
     </div>
   )
 }
@@ -45,25 +54,29 @@ export function SaveSearch({ params, total }: { params: URLSearchParams; total?:
   const [name, setName] = useState('')
   if (existing) {
     return (
-      <button type="button" onClick={() => saved.drop(existing.name)} className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium text-primary">
-        <BookmarkCheck className="h-4 w-4" /> Saved
-      </button>
+      <Button type="button" variant="outline" size="sm" className="text-primary" onClick={() => saved.drop(existing.name)}>
+        <BookmarkCheck className="mr-1.5 h-4 w-4" /> Saved
+      </Button>
     )
   }
   return (
-    <div className="relative">
-      <button type="button" onClick={() => { setName(summarize(params)); setOpen((o) => !o) }} className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium hover:bg-secondary">
-        <Bookmark className="h-4 w-4" /> Save search
-      </button>
-      {open && (
-        <form
-          onSubmit={(e) => { e.preventDefault(); if (!name.trim()) return; saved.save({ name: name.trim(), query, savedAt: Date.now(), seenTotal: total }); setOpen(false) }}
-          className="absolute right-0 top-full z-30 mt-1 flex w-72 gap-2 rounded-lg border bg-popover p-2 shadow-lg"
-        >
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} aria-label="Search name" className="h-8 min-w-0 flex-1 rounded border bg-background px-2 text-sm" />
-          <button type="submit" className="h-8 rounded bg-primary px-3 text-sm font-medium text-primary-foreground">Save</button>
+    <Dialog open={open} onOpenChange={(o) => { if (o) setName(summarize(params)); setOpen(o) }}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" size="sm"><Bookmark className="mr-1.5 h-4 w-4" /> Save search</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <form onSubmit={(e) => { e.preventDefault(); if (!name.trim()) return; saved.save({ name: name.trim(), query, savedAt: Date.now(), seenTotal: total }); setOpen(false) }} className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>Save this search</DialogTitle>
+            <DialogDescription>Find it under Saved, with a market summary and a count of new matches.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <Label htmlFor="search-name">Name</Label>
+            <Input id="search-name" autoFocus value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <DialogFooter><Button type="submit">Save</Button></DialogFooter>
         </form>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

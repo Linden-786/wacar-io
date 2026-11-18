@@ -72,13 +72,15 @@ function predicates(p: URLSearchParams): { key: string; test: Pred }[] {
   for (const r of RANGES) {
     const min = p.get(`${r.key}_min`), max = p.get(`${r.key}_max`)
     if (min == null && max == null) continue
-    const lo = min == null || min === '' ? -Infinity : Number(min)
-    const hi = max == null || max === '' ? Infinity : Number(max)
-    out.push({ key: r.key, test: (l) => { const v = rangeValue(r.key, l); return v != null && v >= lo && v <= hi } })
+    // a bound that is not a number is ignored rather than matching nothing
+    const lo = min == null || min === '' || !Number.isFinite(Number(min)) ? -Infinity : Number(min)
+    const hi = max == null || max === '' || !Number.isFinite(Number(max)) ? Infinity : Number(max)
+    if (lo === -Infinity && hi === Infinity) continue
+    out.push({ key: `${r.key}_range`, test: (l) => { const v = rangeValue(r.key, l); return v != null && v >= lo && v <= hi } })
   }
   const origin = locateZip(p.get('zip'))
   if (origin) {
-    const radius = Math.min(500, Number(p.get('radius')) || 100)
+    const radius = Math.max(1, Math.min(500, Number(p.get('radius')) || 100))
     out.push({ key: 'zip', test: (_, d) => milesBetween(origin.lat, origin.lng, d.lat, d.lng) <= radius })
   }
   const bbox = p.get('bbox')?.split(',').map(Number)
@@ -128,8 +130,8 @@ export function search(p: URLSearchParams, opts: { offset?: number; limit?: numb
     closest: (a, b) => dist(a) - dist(b),
   }
   rows = [...rows].sort(cmp[sort] ?? cmp.newest)
-  const offset = opts.offset ?? 0
-  const limit = opts.limit ?? 24
+  const offset = Math.max(0, Math.trunc(opts.offset ?? 0) || 0)
+  const limit = Math.max(1, Math.min(60, Math.trunc(opts.limit ?? 24) || 24))
   return {
     total: rows.length,
     origin,
@@ -151,7 +153,8 @@ export function facets(p: URLSearchParams, keys?: string[]) {
   const result: Record<string, FacetOption[]> = {}
   for (const f of FACETS) {
     if (keys && !keys.includes(f.key)) continue
-    const rows = run(p, [f.key])
+    // "must have all" facets keep their own filter: the count is what adding the option would leave
+    const rows = run(p, f.all ? [] : [f.key])
     const acc = new Map<string, { count: number; priceSum: number; priced: number; days: number }>()
     for (const l of rows) {
       const v = f.get(l, store.dealerById.get(l.dealerId)!)
@@ -168,7 +171,7 @@ export function facets(p: URLSearchParams, keys?: string[]) {
     result[f.key] = options
   }
   const ranges: Record<string, RangeStats | null> = {}
-  for (const r of RANGES) ranges[r.key] = stats(run(p, [r.key]).map((l) => rangeValue(r.key, l)))
+  for (const r of RANGES) ranges[r.key] = stats(run(p, [`${r.key}_range`]).map((l) => rangeValue(r.key, l)))
   return { total: run(p).length, facets: result, ranges }
 }
 
@@ -188,7 +191,7 @@ export function mapPins(p: URLSearchParams) {
 
 /** Price × mileage grid, computed without the price and mileage filters so it stays put while you pick cells. */
 export function heatmap(p: URLSearchParams, cols = 8, rowsN = 6) {
-  const rows = run(p, ['price', 'miles']).filter((l) => l.price != null)
+  const rows = run(p, ['price_range', 'miles_range']).filter((l) => l.price != null)
   if (rows.length < 8) return null
   const ps = stats(rows.map((l) => l.price))!, ms = stats(rows.map((l) => l.miles))!
   const nice = (lo: number, hi: number, n: number, unit: number) => {
@@ -293,8 +296,14 @@ export function comparables(l: Listing, opts: { trim: boolean; miles: boolean; y
     return true
   })
   rows.sort((a, b) => a.price! - b.price!)
-  const rank = rows.findIndex((x) => x.vin === l.vin) + 1
-  return { rank, total: rows.length, items: rows.map((x) => toView(x, origin)), stats: stats(rows.map((x) => x.price)) }
+  const idx = rows.findIndex((x) => x.vin === l.vin)
+  // only a window around this listing is sent, and only the fields the table shows
+  const from = Math.max(0, Math.min(idx - 4, rows.length - 12))
+  const items = rows.slice(from, from + 12).map((x) => {
+    const d = store.dealerById.get(x.dealerId)!
+    return { vin: x.vin, year: x.year, version: x.version, extColor: x.extColor, price: x.price!, miles: x.miles, city: d.city, state: d.state, distance: Math.round(milesBetween(origin.lat, origin.lng, d.lat, d.lng)) }
+  })
+  return { rank: idx + 1, total: rows.length, from, items, stats: stats(rows.map((x) => x.price)) }
 }
 
 /** Stable short code for share links. */

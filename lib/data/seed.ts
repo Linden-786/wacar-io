@@ -67,7 +67,7 @@ function vinCheckDigit(vin: string) {
   return r === 10 ? 'X' : String(r)
 }
 
-export const SEED_VERSION = 3
+export const SEED_VERSION = 4
 
 export interface Store {
   listings: Listing[]
@@ -94,9 +94,15 @@ export function buildStore(count = 25000): Store {
 
   // ---- dealers
   const dealers: Dealer[] = []
+  const usedNames = new Set<string>()
   let makeCursor = 0
   CITIES.forEach(([city, state, zip, lat, lng, size], ci) => {
-    const mk = (name: string, type: Dealer['type'], group: string | null) => {
+    const mk = (base: string, type: Dealer['type'], group: string | null) => {
+      // dealer names double as filter values, so keep them unique
+      let name = base
+      if (usedNames.has(name)) name = `${base} of ${city}`
+      for (let n = 2; usedNames.has(name); n++) name = `${base} of ${city} #${n}`
+      usedNames.add(name)
       dealers.push({
         id: `d${dealers.length + 1}`,
         name, group, type,
@@ -114,7 +120,7 @@ export function buildStore(count = 25000): Store {
       mk(`${group ? group.split(' ')[0] : city} ${make}${group ? ` of ${city}` : ''}`, 'franchise', group)
     }
     for (let i = 0; i < Math.ceil(size / 2); i++) mk(`${pick(INDIE)} ${pick(INDIE_SUFFIX)}`, 'independent', null)
-    if (ci % 14 === 0) mk(ci % 28 === 0 ? 'DriveDirect Online' : 'Carloop Online', 'online', ci % 28 === 0 ? 'DriveDirect' : 'Carloop')
+    if (ci % 14 === 0) mk(`${ci % 28 === 0 ? 'DriveDirect' : 'Carloop'} Online ${city}`, 'online', ci % 28 === 0 ? 'DriveDirect' : 'Carloop')
   })
   const dealerById = new Map(dealers.map((d) => [d.id, d]))
   const franchiseByMake = new Map<string, Dealer[]>()

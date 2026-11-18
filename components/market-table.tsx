@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { Card } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { MarketSummary } from '@/lib/data/query'
 import { money, num, pct } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -22,21 +24,21 @@ export function MarketTable({ title, first, rows, hide = [] }: { title?: string;
   return (
     <section>
       {title && <h2 className="mb-2 text-lg font-semibold">{title}</h2>}
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs text-muted-foreground">
-            <tr><th className="px-3 py-2 text-left font-medium">{first}</th>{cols.map((c) => <th key={c.id} className="whitespace-nowrap px-3 py-2 text-right font-medium">{c.label}</th>)}</tr>
-          </thead>
-          <tbody>
+      <Card className="overflow-hidden shadow-none">
+        <Table>
+          <TableHeader className="bg-muted/50">
+            <TableRow><TableHead>{first}</TableHead>{cols.map((c) => <TableHead key={c.id} className="whitespace-nowrap text-right">{c.label}</TableHead>)}</TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((r) => (
-              <tr key={r.key} className="border-t">
-                <td className="px-3 py-2 font-medium">{r.href ? <Link href={r.href} className="hover:underline">{r.key}</Link> : r.key}</td>
-                {cols.map((c) => <td key={c.id} className={cn('px-3 py-2 text-right tabular-nums', c.tone?.(r))}>{c.cell(r)}</td>)}
-              </tr>
+              <TableRow key={r.key}>
+                <TableCell className="font-medium">{r.href ? <Link href={r.href} className="hover:underline">{r.key}</Link> : r.key}</TableCell>
+                {cols.map((c) => <TableCell key={c.id} className={cn('text-right tabular-nums', c.tone?.(r))}>{c.cell(r)}</TableCell>)}
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </section>
   )
 }
