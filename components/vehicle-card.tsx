@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { EyeOff, Heart } from 'lucide-react'
-import { CarArt } from '@/components/car-art'
+import { VehiclePhoto } from '@/components/vehicle-photo'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -50,7 +50,7 @@ export function VehicleCard({ l, showDealer = true }: { l: ListingView; showDeal
   return (
     <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
       <Link href={`/search/listings/${l.vin}`} className="flex h-full flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <CarArt body={l.body} color={l.extColor} className="aspect-[212/92] w-full" />
+        <VehiclePhoto photo={l.photo} body={l.body} color={l.extColor} alt={`${l.year} ${l.make} ${l.model}`} className={l.photo ? "aspect-[4/3] w-full" : "aspect-[212/92] w-full"} />
         <CardContent className="flex flex-1 flex-col gap-1.5 p-3">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-lg font-semibold tabular-nums">{l.price == null ? 'No price yet' : money(l.price)}</span>

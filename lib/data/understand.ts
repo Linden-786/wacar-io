@@ -1,8 +1,8 @@
 // Rule-based plain-language search: "awd hybrid suv under 40k near 43017"
 // becomes a filter query. No model calls; just the catalog and some patterns.
-import { EXT_COLORS, INT_COLORS, MODELS } from './catalog'
+import { EXT_COLORS, INT_COLORS } from './catalog'
 import { encodeValue, summarize } from './filters'
-import { getStore, locateZip } from './query'
+import { getStore, locateZip, vocabulary } from './query'
 
 export interface Interpretation { label: string; query: string; kind: 'search' | 'listing' | 'dealer' }
 
@@ -15,6 +15,7 @@ const num = (n: string, k?: string) => Math.round(Number(n.replace(/,/g, '')) * 
 
 export function understand(input: string): Interpretation[] {
   const store = getStore()
+  const MODELS = vocabulary()
   const raw = input.trim()
   if (!raw) return []
   const out: Interpretation[] = []

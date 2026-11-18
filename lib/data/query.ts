@@ -3,15 +3,48 @@
 // not this interface.
 import zipcodes from 'zipcodes'
 import { FACETS, FACET_BY_KEY, RANGES, getValues } from './filters'
+import { MODELS, slug } from './catalog'
+import { buildRealStore } from './real'
 import { buildStore, KNOWN_ZIPS, SEED_VERSION, type Store } from './seed'
 import type { Dealer, FacetOption, Listing, ListingView, RangeStats } from './types'
 
-// Cached across requests (and across dev hot reloads); bump SEED_VERSION to regenerate.
-const g = globalThis as unknown as { __wacarStore?: { version: number; store: Store } }
+// Real crawled inventory when a snapshot is present; otherwise the generated
+// sample market. Cached across requests and rebuilt once a day, because the
+// "days ago" figures are relative to today.
+const g = globalThis as unknown as { __wacarStore?: { version: string; store: Store } }
 export function getStore(): Store {
-  if (g.__wacarStore?.version !== SEED_VERSION) g.__wacarStore = { version: SEED_VERSION, store: buildStore() }
+  const version = `${SEED_VERSION}:${new Date().toISOString().slice(0, 10)}`
+  if (g.__wacarStore?.version !== version) g.__wacarStore = { version, store: buildRealStore() ?? buildStore() }
   return g.__wacarStore.store
 }
+
+/** What can be searched for: every make and model in the current store, with its trims. */
+export interface VocabModel { make: string; model: string; body: string; seats: number; plant: string; country: string; trims: { name: string }[]; gens: { name: string; from: number; to: number }[] }
+const vocabCache = new WeakMap<Store, VocabModel[]>()
+export function vocabulary(): VocabModel[] {
+  const store = getStore()
+  let v = vocabCache.get(store)
+  if (!v) {
+    if (store.source === 'sample') v = MODELS
+    else {
+      const by = new Map<string, { l: Listing; trims: Set<string> }>()
+      for (const l of store.listings) {
+        const k = `${l.make}|${l.model}`
+        if (!by.has(k)) by.set(k, { l, trims: new Set() })
+        by.get(k)!.trims.add(l.trim)
+      }
+      v = Array.from(by.values(), ({ l, trims }) => ({
+        make: l.make, model: l.model, body: l.body, seats: l.seats, plant: l.plant, country: l.country,
+        trims: Array.from(trims, (name) => ({ name })),
+        gens: MODELS.find((m) => m.make === l.make && m.model === l.model)?.gens ?? [],
+      }))
+    }
+    vocabCache.set(store, v)
+  }
+  return v
+}
+export const storeMakes = () => Array.from(new Set(vocabulary().map((m) => m.make))).sort()
+export const findStoreModel = (makeSlug: string, modelSlug: string) => vocabulary().find((m) => slug(m.make) === slug(makeSlug) && slug(m.model) === slug(modelSlug))
 
 export interface Point { lat: number; lng: number; label: string }
 

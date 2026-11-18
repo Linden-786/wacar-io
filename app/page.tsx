@@ -21,13 +21,21 @@ const QUICK: [string, string][] = [
 ]
 
 export default function Home() {
-  const { listings } = getStore()
+  const store = getStore()
+  const { listings } = store
   const all = marketSummary(listings)
   const active = listings.filter((l) => l.status === 'active')
   const models = groupSummary(listings, (l) => `${l.make}|${l.model}`).filter((m) => m.active >= 25)
   const drops = [...models].filter((m) => m.change30 != null).sort((a, b) => a.change30! - b.change30!).slice(0, 4)
   const fastest = [...models].filter((m) => m.daysSupply != null).sort((a, b) => a.daysSupply! - b.daysSupply!).slice(0, 4)
   const newCars = active.filter((l) => l.condition === 'new')
+  // Trends and sold counts need a month of daily crawls behind them; until then show what is known today.
+  const young = store.source === 'crawl' && (Date.now() - Date.parse(store.trackingSince!)) / 86400000 < 30
+  const thisWeek = active.filter((l) => l.daysListed <= 7)
+  const weekByModel = new Map<string, number>()
+  for (const l of thisWeek) weekByModel.set(`${l.make}|${l.model}`, (weekByModel.get(`${l.make}|${l.model}`) ?? 0) + 1)
+  const mostListed = [...models].sort((a, b) => b.active - a.active).slice(0, 4)
+  const newest = [...models].filter((m) => weekByModel.has(m.key)).sort((a, b) => weekByModel.get(b.key)! - weekByModel.get(a.key)!).slice(0, 4)
   const notOnLot = newCars.filter((l) => l.availability !== 'On lot').length
 
   const fresh = active.filter((l) => l.price != null)
@@ -40,7 +48,7 @@ export default function Home() {
       <section className="border-b bg-gradient-to-b from-primary/10 to-transparent">
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-14 text-center">
           <h1 className="text-balance text-3xl font-bold tracking-tight sm:text-5xl">Every car for sale, with the story behind its price</h1>
-          <p className="mx-auto mt-4 max-w-xl text-pretty text-muted-foreground">Search dealer inventory nationwide. See how long a car has sat, every price change, what options it was built with, and how it ranks against the same car elsewhere.</p>
+          <p className="mx-auto mt-4 max-w-xl text-pretty text-muted-foreground">{store.source === 'crawl' ? `Search real dealer inventory in the ${store.region} area.` : 'Search dealer inventory nationwide.'} See how long a car has sat, every price change, what options it was built with, and how it ranks against the same car elsewhere.</p>
           <div className="mx-auto mt-7 max-w-2xl text-left"><SearchBox large /></div>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {QUICK.map(([label, q]) => <Button key={label} asChild variant="outline" size="sm" className="h-8 rounded-full bg-background font-normal"><Link href={`/search/listings?${q}`}>{label}</Link></Button>)}
@@ -57,15 +65,22 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <Stat label="For sale now" value={num(all.active)} sub={`${num(all.newCount)} new · ${num(all.usedCount)} used`} />
-            <Stat label="Average asking price" value={money(all.avgPrice)} sub={`${pct(all.change30)} in 30 days`} />
-            <Stat label="Sold in the last 30 days" value={num(all.sold30)} sub={`${all.avgDaysToSell ?? '—'} days to sell on average`} />
-            <Stat label="New cars not yet on the lot" value={`${Math.round((notOnLot / Math.max(1, newCars.length)) * 100)}%`} sub="in transit or in production" />
+            <Stat label="Average asking price" value={money(all.avgPrice)} sub={young ? 'across every listing with a price' : `${pct(all.change30)} in 30 days`} />
+            {young
+              ? <Stat label="Listed in the last 7 days" value={num(thisWeek.length)} sub={`sold counts start ${new Date(`${store.trackingSince}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`} />
+              : <Stat label="Sold in the last 30 days" value={num(all.sold30)} sub={`${all.avgDaysToSell ?? '—'} days to sell on average`} />}
+            {store.source === 'crawl'
+              ? <Stat label="Dealers tracked" value={num(store.dealers.length)} sub={`${store.region} · updated ${new Date(store.generatedAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })}`} />
+              : <Stat label="New cars not yet on the lot" value={`${Math.round((notOnLot / Math.max(1, newCars.length)) * 100)}%`} sub="in transit or in production" />}
           </div>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {[
+            {(young ? [
+              { title: 'Most cars for sale', rows: mostListed.map((m) => ({ key: m.key, right: num(m.active), sub: `avg ${money(m.avgPrice)}` })) },
+              { title: 'Most new arrivals this week', rows: newest.map((m) => ({ key: m.key, right: num(weekByModel.get(m.key)!), sub: `of ${num(m.active)} for sale` })) },
+            ] : [
               { title: 'Prices falling fastest (30 days)', rows: drops.map((m) => ({ key: m.key, right: pct(m.change30), sub: `avg ${money(m.avgPrice)}` })) },
               { title: 'Selling fastest (days of supply)', rows: fastest.map((m) => ({ key: m.key, right: `${m.daysSupply} days`, sub: `${m.sold30} sold in 30 days` })) },
-            ].map((card) => (
+            ]).map((card) => (
               <Card key={card.title} className="shadow-none">
                 <CardHeader className="p-4 pb-0"><CardTitle className="text-sm">{card.title}</CardTitle></CardHeader>
                 <CardContent className="p-4 pt-2">

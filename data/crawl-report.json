@@ -1,0 +1,500 @@
+{
+ "date": "2026-11-18",
+ "minutes": 67.3,
+ "sites": [
+  {
+   "host": "www.baronhonda.com",
+   "cars": 398,
+   "requests": 17,
+   "trusted": true
+  },
+  {
+   "host": "www.bmwlic.com",
+   "cars": 551,
+   "requests": 24,
+   "trusted": true
+  },
+  {
+   "host": "www.brightbaylincoln.com",
+   "cars": 203,
+   "requests": 10,
+   "trusted": true
+  },
+  {
+   "host": "www.brooklynsubarudeals.com",
+   "cars": 120,
+   "requests": 6,
+   "trusted": true
+  },
+  {
+   "host": "www.brunswickgenesis.com",
+   "cars": 182,
+   "requests": 8,
+   "trusted": true
+  },
+  {
+   "host": "www.buickgmcofmahwah.com",
+   "cars": 119,
+   "requests": 12,
+   "trusted": true
+  },
+  {
+   "host": "www.cityworldford.net",
+   "cars": 258,
+   "requests": 11,
+   "trusted": true
+  },
+  {
+   "host": "www.cityworldtoyota.com",
+   "cars": 388,
+   "requests": 18,
+   "trusted": true
+  },
+  {
+   "host": "www.dchbrunswicktoyota.com",
+   "cars": 547,
+   "requests": 32,
+   "trusted": true
+  },
+  {
+   "host": "www.drivesunrisechevy.com",
+   "cars": 1790,
+   "requests": 77,
+   "trusted": true
+  },
+  {
+   "host": "www.eastchesterchryslerjeepdodgeram.com",
+   "cars": 391,
+   "requests": 40,
+   "trusted": true
+  },
+  {
+   "host": "www.easthillsvw.com",
+   "cars": 198,
+   "requests": 9,
+   "trusted": true
+  },
+  {
+   "host": "www.freedomfordusa.com",
+   "cars": 434,
+   "requests": 19,
+   "trusted": true
+  },
+  {
+   "host": "www.gardencityjeepchryslerdodge.com",
+   "cars": 365,
+   "requests": 17,
+   "trusted": true
+  },
+  {
+   "host": "www.genesisofwayne.com",
+   "cars": 683,
+   "requests": 30,
+   "trusted": true
+  },
+  {
+   "host": "www.glentoyota.com",
+   "cars": 367,
+   "requests": 17,
+   "trusted": true
+  },
+  {
+   "host": "www.hassettford.com",
+   "cars": 353,
+   "requests": 16,
+   "trusted": true
+  },
+  {
+   "host": "www.hudsonhyundai.com",
+   "cars": 356,
+   "requests": 16,
+   "trusted": true
+  },
+  {
+   "host": "www.hudsontoyota.com",
+   "cars": 463,
+   "requests": 24,
+   "trusted": true
+  },
+  {
+   "host": "www.islandautogroup.com",
+   "cars": 2134,
+   "requests": 90,
+   "trusted": true
+  },
+  {
+   "host": "www.jaguarwhiteplains.com",
+   "cars": 68,
+   "requests": 4,
+   "trusted": true
+  },
+  {
+   "host": "www.johnstarkskia.com",
+   "cars": 284,
+   "requests": 13,
+   "trusted": true
+  },
+  {
+   "host": "www.kiaofwestnyack.com",
+   "cars": 150,
+   "requests": 14,
+   "trusted": true
+  },
+  {
+   "host": "www.koeppelhyundai.com",
+   "cars": 384,
+   "requests": 17,
+   "trusted": true
+  },
+  {
+   "host": "www.koeppelmazda.com",
+   "cars": 326,
+   "requests": 14,
+   "trusted": true
+  },
+  {
+   "host": "www.koeppelsubaru.com",
+   "cars": 243,
+   "requests": 31,
+   "trusted": true
+  },
+  {
+   "host": "www.kundertvolvocars.com",
+   "cars": 228,
+   "requests": 28,
+   "trusted": true
+  },
+  {
+   "host": "www.levittownford.com",
+   "cars": 416,
+   "requests": 24,
+   "trusted": true
+  },
+  {
+   "host": "www.lexusofbrooklyn.com",
+   "cars": 330,
+   "requests": 15,
+   "trusted": true
+  },
+  {
+   "host": "www.lexusofmanhattan.com",
+   "cars": 570,
+   "requests": 25,
+   "trusted": true
+  },
+  {
+   "host": "www.lexusofqueens.com",
+   "cars": 576,
+   "requests": 25,
+   "trusted": true
+  },
+  {
+   "host": "www.libertysubaru.com",
+   "cars": 288,
+   "requests": 26,
+   "trusted": true
+  },
+  {
+   "host": "www.lucasford.com",
+   "cars": 197,
+   "requests": 9,
+   "trusted": true
+  },
+  {
+   "host": "www.malouf.com",
+   "cars": 484,
+   "requests": 21,
+   "trusted": true
+  },
+  {
+   "host": "www.malouffordinc.com",
+   "cars": 187,
+   "requests": 19,
+   "trusted": true
+  },
+  {
+   "host": "www.maxonhyundai.com",
+   "cars": 727,
+   "requests": 32,
+   "trusted": true
+  },
+  {
+   "host": "www.mazdaofvalleystream.com",
+   "cars": 426,
+   "requests": 25,
+   "trusted": true
+  },
+  {
+   "host": "www.mercedesbenzparamus.com",
+   "cars": 511,
+   "requests": 28,
+   "trusted": true
+  },
+  {
+   "host": "www.merrickdodgechryslerjeep.com",
+   "cars": 392,
+   "requests": 17,
+   "trusted": true
+  },
+  {
+   "host": "www.mileasubaru.com",
+   "cars": 117,
+   "requests": 9,
+   "trusted": true
+  },
+  {
+   "host": "www.myislandcdjr.com",
+   "cars": 282,
+   "requests": 13,
+   "trusted": true
+  },
+  {
+   "host": "www.myislandchevrolet.com",
+   "cars": 123,
+   "requests": 6,
+   "trusted": true
+  },
+  {
+   "host": "www.myislandhyundai.com",
+   "cars": 485,
+   "requests": 21,
+   "trusted": true
+  },
+  {
+   "host": "www.myislandvw.com",
+   "cars": 158,
+   "requests": 8,
+   "trusted": true
+  },
+  {
+   "host": "www.newinsbayshoreford.com",
+   "cars": 337,
+   "requests": 15,
+   "trusted": true
+  },
+  {
+   "host": "www.northbergenbuickgmc.com",
+   "cars": 1646,
+   "requests": 71,
+   "trusted": true
+  },
+  {
+   "host": "www.nycjeep.com",
+   "cars": 274,
+   "requests": 12,
+   "trusted": true
+  },
+  {
+   "host": "www.openroadvolvocarsedison.com",
+   "cars": 309,
+   "requests": 14,
+   "trusted": true
+  },
+  {
+   "host": "www.paramuschevrolet.com",
+   "cars": 389,
+   "requests": 17,
+   "trusted": true
+  },
+  {
+   "host": "www.parkwaytoyota.com",
+   "cars": 194,
+   "requests": 9,
+   "trusted": true
+  },
+  {
+   "host": "www.paulmiller.com",
+   "cars": 2939,
+   "requests": 114,
+   "trusted": true
+  },
+  {
+   "host": "www.performancevw.com",
+   "cars": 810,
+   "requests": 35,
+   "trusted": true
+  },
+  {
+   "host": "www.plazahyundai.com",
+   "cars": 603,
+   "requests": 26,
+   "trusted": true
+  },
+  {
+   "host": "www.plazatoyota.com",
+   "cars": 477,
+   "requests": 21,
+   "trusted": true
+  },
+  {
+   "host": "www.porschebrooklyn.com",
+   "cars": 80,
+   "requests": 4,
+   "trusted": true
+  },
+  {
+   "host": "www.porschesouthshore.com",
+   "cars": 149,
+   "requests": 8,
+   "trusted": true
+  },
+  {
+   "host": "www.premierfordinc.com",
+   "cars": 29,
+   "requests": 3,
+   "trusted": true
+  },
+  {
+   "host": "www.premierfordofbayridge.com",
+   "cars": 33,
+   "requests": 3,
+   "trusted": true
+  },
+  {
+   "host": "www.premierlincolnbrooklyn.com",
+   "cars": 22,
+   "requests": 3,
+   "trusted": true
+  },
+  {
+   "host": "www.prestigetoyota.com",
+   "cars": 203,
+   "requests": 10,
+   "trusted": false,
+   "note": "no inventory data on /new-inventory/index.htm"
+  },
+  {
+   "host": "www.prestigevwct.com",
+   "cars": 151,
+   "requests": 7,
+   "trusted": true
+  },
+  {
+   "host": "www.qualitychevyofenglewood.com",
+   "cars": 174,
+   "requests": 9,
+   "trusted": true
+  },
+  {
+   "host": "www.ramseymazda.com",
+   "cars": 1068,
+   "requests": 45,
+   "trusted": true
+  },
+  {
+   "host": "www.riverdalechryslerjeep.com",
+   "cars": 126,
+   "requests": 11,
+   "trusted": true
+  },
+  {
+   "host": "www.rocklandchryslerjeepdodge.net",
+   "cars": 463,
+   "requests": 20,
+   "trusted": true
+  },
+  {
+   "host": "www.route46nissan.com",
+   "cars": 448,
+   "requests": 20,
+   "trusted": true
+  },
+  {
+   "host": "www.smithhavenchryslerjeepdodge.net",
+   "cars": 270,
+   "requests": 13,
+   "trusted": false,
+   "note": "no inventory data on /new-inventory/index.htm"
+  },
+  {
+   "host": "www.smythevolvocars.com",
+   "cars": 454,
+   "requests": 58,
+   "trusted": true
+  },
+  {
+   "host": "www.southshorechryslerdodgejeepram.com",
+   "cars": 510,
+   "requests": 22,
+   "trusted": true
+  },
+  {
+   "host": "www.stamfordkia.com",
+   "cars": 168,
+   "requests": 8,
+   "trusted": true
+  },
+  {
+   "host": "www.stamfordsubaru.com",
+   "cars": 249,
+   "requests": 14,
+   "trusted": true
+  },
+  {
+   "host": "www.starksfordofqueens.com",
+   "cars": 490,
+   "requests": 22,
+   "trusted": true
+  },
+  {
+   "host": "www.teterboromotors.com",
+   "cars": 270,
+   "requests": 12,
+   "trusted": true
+  },
+  {
+   "host": "www.tomsunionvw.com",
+   "cars": 589,
+   "requests": 27,
+   "trusted": true
+  },
+  {
+   "host": "www.toyotaofhackensack.com",
+   "cars": 670,
+   "requests": 29,
+   "trusted": true
+  },
+  {
+   "host": "www.toyotaofmanhattan.com",
+   "cars": 326,
+   "requests": 15,
+   "trusted": true
+  },
+  {
+   "host": "www.verner-cadbyford.com",
+   "cars": 178,
+   "requests": 15,
+   "trusted": true
+  },
+  {
+   "host": "www.volvocarsmanhattan.com",
+   "cars": 856,
+   "requests": 36,
+   "trusted": true
+  },
+  {
+   "host": "www.volvocarswhiteplains.com",
+   "cars": 1415,
+   "requests": 127,
+   "trusted": true
+  },
+  {
+   "host": "www.waynehyundai.com",
+   "cars": 937,
+   "requests": 40,
+   "trusted": true
+  },
+  {
+   "host": "www.waynemazda.com",
+   "cars": 1910,
+   "requests": 81,
+   "trusted": true
+  },
+  {
+   "host": "www.westburyjeep.com",
+   "cars": 36,
+   "requests": 4,
+   "trusted": true
+  }
+ ]
+}

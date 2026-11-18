@@ -5,9 +5,9 @@ import { notFound } from 'next/navigation'
 import { LineChart, Stat } from '@/components/charts'
 import { MarketTable } from '@/components/market-table'
 import { VehicleCard } from '@/components/vehicle-card'
-import { findModel, slug } from '@/lib/data/catalog'
+import { slug } from '@/lib/data/catalog'
 import { safety } from '@/lib/data/nhtsa'
-import { groupSummary, marketSummary, modelRows, toView, weeklySeries } from '@/lib/data/query'
+import { findStoreModel, getStore, groupSummary, marketSummary, modelRows, toView, weeklySeries } from '@/lib/data/query'
 import { dateOf, money, num, pct } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic'
 type Props = { params: { make: string; model: string } }
 
 export function generateMetadata({ params }: Props): Metadata {
-  const m = findModel(params.make, params.model)
+  const m = findStoreModel(params.make, params.model)
   return { title: m ? `${m.make} ${m.model} market overview` : 'Model not found' }
 }
 
@@ -27,8 +27,10 @@ async function SafetyRows({ make, model, years }: { make: string; model: string;
 }
 
 export default function Overview({ params }: Props) {
-  const m = findModel(params.make, params.model)
+  const m = findStoreModel(params.make, params.model)
   if (!m) notFound()
+  const store = getStore()
+  const crawled = store.source === 'crawl'
   const rows = modelRows(m.make, m.model)
   const all = marketSummary(rows)
   const q = `make=${encodeURIComponent(m.make)}&model=${encodeURIComponent(m.model)}`
@@ -43,7 +45,8 @@ export default function Overview({ params }: Props) {
         <div>
           <p className="text-sm text-muted-foreground">Market overview</p>
           <h1 className="text-3xl font-bold tracking-tight">{m.make} {m.model}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{m.body} · {m.seats} seats · assembled in {m.plant}, {m.country}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{m.body} · {m.seats} seats{crawled ? '' : ` · assembled in ${m.plant}, ${m.country}`}</p>
+          {crawled && <p className="mt-1 max-w-2xl text-xs text-muted-foreground">From dealer websites in the {store.region} area, tracked since {store.trackingSince}. Trends before that date only reflect cars still for sale today, and sold counts start from then.</p>}
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm"><Link href={`/research/used-car-prices/${slug(m.make)}/${slug(m.model)}`}>Used price research</Link></Button>

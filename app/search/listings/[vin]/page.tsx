@@ -2,7 +2,9 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CarArt } from '@/components/car-art'
+import { ExternalLink } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { VehiclePhoto } from '@/components/vehicle-photo'
 import { Scatter } from '@/components/charts'
 import { ListingActions, ListingTabs } from '@/components/listing-tabs'
 import { Tags } from '@/components/vehicle-card'
@@ -54,12 +56,15 @@ export default function ListingPage({ params }: { params: { vin: string } }) {
   const peers = comparables(raw, { trim: true, year: true, miles: false, local: false, sold: false })
   const market = store.listings.filter((x) => x.make === l.make && x.model === l.model && x.status === 'active' && x.price != null && (x.condition === 'new') === (l.condition === 'new') && x.vin !== l.vin)
   const typicalDoc = stats(store.dealers.filter((d) => d.state === l.dealer.state).map((d) => d.docFee))?.median ?? 400
+  const crawled = store.source === 'crawl'
+  // dealers publish MSRP for new cars only; a used car's "retail value" is not a sticker price
+  const showMsrp = !crawled || (l.condition === 'new' && l.msrp > 0 && l.msrp !== l.price)
   const changes = Math.max(0, l.history.length - 1)
   const optionTotal = l.options.reduce((s, o) => s + o.price, 0)
   const specs: [string, string][] = [
     ['VIN', l.vin], ['Stock #', l.stock], ['Exterior', `${l.extColorName} (${l.extColor})`], ['Interior', l.intColor],
     ['Body style', `${l.body} · ${l.doors} doors · ${l.seats} seats`], ['Engine', l.engine], ['Transmission', l.transmission],
-    ['Drivetrain', l.drivetrain], ['Fuel', `${l.fuel} (${l.powertrain})`], ['Generation', l.generation],
+    ['Drivetrain', l.drivetrain], ['Fuel', `${l.fuel} (${l.powertrain})`], ...(l.generation ? [['Generation', l.generation] as [string, string]] : []),
     ['Assembly', `${l.plant}, ${l.country}`], ['Title', l.title], ['Previous use', l.prevUse], ['Availability', l.availability],
   ]
 
@@ -71,8 +76,8 @@ export default function ListingPage({ params }: { params: { vin: string } }) {
 
       <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div>
-          <CarArt body={l.body} color={l.extColor} className="aspect-[212/92] w-full rounded-lg border" />
-          <p className="mt-1 text-xs text-muted-foreground">Illustration only: sample listings have no photos.</p>
+          <VehiclePhoto eager photo={l.photo} body={l.body} color={l.extColor} alt={`${l.year} ${l.make} ${l.model} ${l.trim}`} className={l.photo ? 'aspect-[16/10] w-full rounded-lg border' : 'aspect-[212/92] w-full rounded-lg border'} />
+          <p className="mt-1 text-xs text-muted-foreground">{l.photo ? `Photo from ${l.dealer.name}.` : 'Illustration only: no photo is available for this listing.'}</p>
           <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">{l.year} {l.make} {l.model} <span className="text-muted-foreground">{l.version}</span></h1>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <Tags l={l} />
@@ -87,10 +92,10 @@ export default function ListingPage({ params }: { params: { vin: string } }) {
             <div className="text-xs text-muted-foreground">{l.status === 'sold' ? 'Last asking price' : 'Asking price'} · before tax and registration</div>
             <div className="text-3xl font-bold tabular-nums">{l.price == null ? 'No price yet' : money(l.price)}</div>
             <dl className="mt-3 space-y-1 text-sm">
-              <div className="flex justify-between"><dt className="text-muted-foreground">MSRP with options</dt><dd className="tabular-nums">{money(l.msrp)}</dd></div>
-              {l.price != null && <div className="flex justify-between"><dt className="text-muted-foreground">vs. MSRP</dt><dd className="tabular-nums">{signedMoney(l.price - l.msrp)} ({l.discount! > 0 ? '−' : '+'}{Math.abs(l.discount!).toFixed(1)}%)</dd></div>}
+              {showMsrp && <div className="flex justify-between"><dt className="text-muted-foreground">MSRP with options</dt><dd className="tabular-nums">{money(l.msrp)}</dd></div>}
+              {showMsrp && l.price != null && <div className="flex justify-between"><dt className="text-muted-foreground">vs. MSRP</dt><dd className="tabular-nums">{signedMoney(l.price - l.msrp)} ({l.discount! > 0 ? '−' : '+'}{Math.abs(l.discount!).toFixed(1)}%)</dd></div>}
               {peers.stats && l.price != null && <div className="flex justify-between"><dt className="text-muted-foreground">vs. comparable median</dt><dd className="tabular-nums">{signedMoney(l.price - peers.stats.median)}</dd></div>}
-              {peers.rank > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Price rank</dt><dd className="tabular-nums">#{peers.rank} of {peers.total} nationwide</dd></div>}
+              {peers.rank > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Price rank</dt><dd className="tabular-nums">#{peers.rank} of {peers.total} {crawled ? 'in the area' : 'nationwide'}</dd></div>}
             </dl>
             <p className="mt-3 border-t pt-3 text-sm text-muted-foreground">
               {l.status === 'sold' ? `Sold ${ago(l.soldDay!)} after ${l.daysListed - l.soldDay!} days for sale` : `Listed for ${l.daysListed} day${l.daysListed === 1 ? '' : 's'}`}
@@ -101,7 +106,8 @@ export default function ListingPage({ params }: { params: { vin: string } }) {
             <div className="text-xs text-muted-foreground">Seller</div>
             <Link href={`/search/listings?dealer=${encodeURIComponent(encodeValue(l.dealer.name))}`} className="font-semibold hover:underline">{l.dealer.name}</Link>
             <div className="text-muted-foreground">{l.dealer.address}, {l.dealer.city}, {l.dealer.state} {l.dealer.zip}</div>
-            <div className="text-muted-foreground">{l.dealer.phone} · {l.dealer.type}{l.dealer.group ? ` · ${l.dealer.group}` : ''}</div>
+            <div className="text-muted-foreground">{l.dealer.phone}{crawled ? '' : ` · ${l.dealer.type}`}{l.dealer.group ? ` · ${l.dealer.group}` : ''}</div>
+            {l.url && <Button asChild size="sm" className="mt-3 w-full"><a href={l.url} target="_blank" rel="noopener noreferrer nofollow">View on dealer site <ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></Button>}
           </CardContent></Card>
         </aside>
       </div>
@@ -116,7 +122,7 @@ export default function ListingPage({ params }: { params: { vin: string } }) {
           </dl></Card>
         </section>
         <div className="space-y-8">
-          <section>
+          {(!crawled || l.options.length > 0) && <section>
             <h2 className="text-lg font-semibold">Installed options</h2>
             {!l.options.length ? <p className="mt-3 text-sm text-muted-foreground">No factory options beyond the {l.trim} trim.</p> : (
               <Card className="mt-3 overflow-hidden shadow-none"><dl className="divide-y text-sm">
@@ -127,7 +133,7 @@ export default function ListingPage({ params }: { params: { vin: string } }) {
               </dl></Card>
             )}
             {!!l.features.length && <div className="mt-3 flex flex-wrap gap-1.5">{l.features.map((f) => <Link key={f} href={`/search/listings?make=${encodeURIComponent(l.make)}&model=${encodeURIComponent(l.model)}&feature=${encodeURIComponent(f)}`} ><Badge variant="outline" className="font-normal hover:border-primary">{f}</Badge></Link>)}</div>}
-          </section>
+          </section>}
           <section>
             <h2 className="text-lg font-semibold">Where it sits in the market</h2>
             <p className="text-sm text-muted-foreground">Every {l.condition === 'new' ? 'new' : 'used'} {l.make} {l.model} for sale, price against mileage. This listing is highlighted.</p>

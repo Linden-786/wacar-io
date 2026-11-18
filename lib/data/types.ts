@@ -14,6 +14,8 @@ export interface Dealer {
   lng: number
   phone: string
   docFee: number
+  /** the dealer's own website (crawled inventory only) */
+  site?: string
 }
 
 export interface PricePoint {
@@ -82,6 +84,10 @@ export interface Listing {
   soldDay: number | null
   history: PricePoint[]
   previousSellers: PreviousSeller[]
+  /** from the dealer's site (crawled inventory only) */
+  photo?: string | null
+  url?: string
+  fees?: { label: string; amount: number; total: boolean }[]
 }
 
 /** Listing joined with its dealer plus computed fields, as sent to the client. */

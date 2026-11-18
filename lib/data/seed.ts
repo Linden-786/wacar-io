@@ -68,13 +68,18 @@ function vinCheckDigit(vin: string) {
   return r === 10 ? 'X' : String(r)
 }
 
-export const SEED_VERSION = 5
+export const SEED_VERSION = 7
 
 export interface Store {
   listings: Listing[]
   dealers: Dealer[]
   dealerById: Map<string, Dealer>
   byVin: Map<string, Listing>
+  /** 'crawl' = real listings collected from dealer sites; 'sample' = generated */
+  source: 'crawl' | 'sample'
+  generatedAt?: string
+  region?: string
+  trackingSince?: string
 }
 
 // Most generated listings are already sold: a steady market over the 150-day
@@ -286,7 +291,7 @@ export function buildStore(count = 46000): Store {
     })
   }
 
-  return { listings, dealers, dealerById, byVin: new Map(listings.map((l) => [l.vin, l])) }
+  return { listings, dealers, dealerById, byVin: new Map(listings.map((l) => [l.vin, l])), source: 'sample' }
 }
 
 export const KNOWN_ZIPS = CITIES.map(([city, state, zip, lat, lng]) => ({ city, state, zip, lat, lng }))

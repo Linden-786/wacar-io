@@ -47,11 +47,12 @@ export function ListingActions({ vin, shareUrl }: { vin: string; shareUrl: strin
 function History({ l }: { l: ListingView }) {
   const points = l.history
   const lowest = points.length ? Math.min(...points.map((p) => p.price)) : null
-  const feeLines = l.price == null ? [] : [
+  // crawled listings carry the dealer's own price lines; sample ones are built from the doc fee
+  const feeLines = (l.price == null ? [] : l.fees?.length ? l.fees.map((f) => [f.label, f.amount]) : [
     ['Advertised price', l.price],
     ['Documentation fee', l.dealer.docFee],
     ['Total before tax and registration', l.price + l.dealer.docFee],
-  ] as [string, number][]
+  ]) as [string, number][]
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div>
@@ -84,7 +85,7 @@ function History({ l }: { l: ListingView }) {
             <Card className="mt-2 shadow-none">
               <dl className="divide-y text-sm">
                 {feeLines.map(([k, v], i) => (
-                  <div key={k} className={cn('flex justify-between px-3 py-2', i === feeLines.length - 1 && 'bg-muted/40 font-semibold')}><dt>{k}</dt><dd className="tabular-nums">{money(v)}</dd></div>
+                  <div key={k} className={cn('flex justify-between px-3 py-2', i === feeLines.length - 1 && 'bg-muted/40 font-semibold')}><dt>{k}</dt><dd className="tabular-nums">{v < 0 ? `−${money(-v)}` : money(v)}</dd></div>
                 ))}
               </dl>
             </Card>
@@ -92,7 +93,7 @@ function History({ l }: { l: ListingView }) {
         )}
         <div>
           <h3 className="text-sm font-semibold">Previous sellers</h3>
-          {!l.previousSellers.length ? <p className="mt-2 text-sm text-muted-foreground">{l.condition === 'new' ? 'New vehicle: no earlier sellers.' : 'No earlier listings on record for this VIN.'}</p> : (
+          {!l.previousSellers.length ? <p className="mt-2 text-sm text-muted-foreground">{l.condition === 'new' ? 'New vehicle: no earlier sellers.' : l.url ? 'Earlier sellers are not tracked yet for this VIN.' : 'No earlier listings on record for this VIN.'}</p> : (
             <ul className="mt-2 space-y-2">
               {l.previousSellers.map((s) => (
                 <li key={`${s.dealer}-${s.fromDay}`}>

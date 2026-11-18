@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { BarChart, LineChart, Stat } from '@/components/charts'
 import { MarketTable } from '@/components/market-table'
-import { MAKES, MODELS, findModel, slug } from '@/lib/data/catalog'
-import { getStore, groupSummary, marketSummary, weeklySeries } from '@/lib/data/query'
+import { slug } from '@/lib/data/catalog'
+import { findStoreModel, getStore, groupSummary, marketSummary, storeMakes, vocabulary, weeklySeries } from '@/lib/data/query'
 import type { Listing } from '@/lib/data/types'
 import { dateOf, money, num, pct } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -16,9 +16,9 @@ const BASE = '/research/used-car-prices'
 
 function resolve(parts: string[] = []) {
   const [makeSlug, modelSlug, extra] = parts
-  const make = makeSlug ? MAKES.find((m) => slug(m) === makeSlug) : undefined
+  const make = makeSlug ? storeMakes().find((m) => slug(m) === makeSlug) : undefined
   if (makeSlug && !make) return null
-  const model = make && modelSlug ? findModel(make, modelSlug) : undefined
+  const model = make && modelSlug ? findStoreModel(make, modelSlug) : undefined
   if (modelSlug && !model) return null
   let trim: string | undefined, year: number | undefined
   if (extra && model) {
@@ -38,7 +38,8 @@ export function generateMetadata({ params }: Props): Metadata {
 export default function Research({ params }: Props) {
   const r = resolve(params.slug)
   if (!r) notFound()
-  const used = getStore().listings.filter((l: Listing) => l.condition !== 'new' && (!r.make || l.make === r.make) && (!r.model || l.model === r.model.model) && (!r.trim || l.trim === r.trim) && (!r.year || l.year === r.year))
+  const store = getStore()
+  const used = store.listings.filter((l: Listing) => l.condition !== 'new' && (!r.make || l.make === r.make) && (!r.model || l.model === r.model.model) && (!r.trim || l.trim === r.trim) && (!r.year || l.year === r.year))
   const all = marketSummary(used)
   const series = weeklySeries(used)
   const label = (d: number) => dateOf(d, { month: 'short', day: 'numeric' })
@@ -58,7 +59,7 @@ export default function Research({ params }: Props) {
     : !r.model
       ? groupSummary(used, (l) => l.model).map((x) => ({ ...x, href: `${BASE}/${slug(r.make!)}/${slug(x.key)}` }))
       : []
-  const movers = !r.model ? groupSummary(used, (l) => `${l.make} ${l.model}`).filter((x) => x.active >= 15 && x.change30 != null).sort((a, b) => Math.abs(b.change30!) - Math.abs(a.change30!)).slice(0, 6).map((x) => { const m = MODELS.find((d) => `${d.make} ${d.model}` === x.key)!; return { ...x, href: `${BASE}/${slug(m.make)}/${slug(m.model)}` } }) : []
+  const movers = !r.model ? groupSummary(used, (l) => `${l.make} ${l.model}`).filter((x) => x.active >= 15 && x.change30 != null).sort((a, b) => Math.abs(b.change30!) - Math.abs(a.change30!)).slice(0, 6).map((x) => { const m = vocabulary().find((d) => `${d.make} ${d.model}` === x.key)!; return { ...x, href: `${BASE}/${slug(m.make)}/${slug(m.model)}` } }) : []
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-8 px-4 py-6">
@@ -68,7 +69,7 @@ export default function Research({ params }: Props) {
           <h1 className="text-3xl font-bold tracking-tight">Used {name} prices</h1>
           <Button asChild size="sm" className="font-semibold"><Link href={`/search/listings?${q}`}>See {num(all.active)} for sale</Link></Button>
         </div>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Asking prices from dealer listings over the last five months. Sold counts are estimated from listings leaving the market.</p>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Asking prices from dealer listings over the last five months. Sold counts are estimated from listings leaving the market.{store.source === 'crawl' && ` Collected from dealer websites in the ${store.region} area since ${store.trackingSince}; trends before that date only reflect cars still for sale today.`}</p>
       </div>
 
       {all.active + all.sold30 === 0 ? <Card className="border-dashed p-8 text-center text-muted-foreground shadow-none">No used listings for this selection yet.</Card> : (

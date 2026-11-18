@@ -1,0 +1,946 @@
+[
+ {
+  "host": "bayridgehonda.com",
+  "platform": "dealerinspire"
+ },
+ {
+  "host": "dna.autofunds.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "hondacityli.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "idealautosalesstatenisland.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "lexusofedison.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "majorworld.com",
+  "platform": "dealerinspire"
+ },
+ {
+  "host": "mbofbrooklyn.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "mbofcaldwell.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "sayvilleford.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.acuraofbrooklyn.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.acuraofwestchester.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.allamericanfordinparamus.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.allcapitalmotors.com",
+  "platform": "unreachable"
+ },
+ {
+  "host": "www.apexautodealers.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.atlantictoyotany.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.audibrooklyn.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audigreenwich.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audihawthorne.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audilynbrook.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audimanhattan.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audimillburn.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audimoheganlake.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audiofhuntington.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audiofsmithtown.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.audiparamus.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.autofunds.com",
+  "platform": "http-503"
+ },
+ {
+  "host": "www.autoworldkia.net",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.babylonhonda.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.baronhonda.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.bayridgemazda.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.baysidechryslerjeepdodge.net",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.baysidevw.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.bellaviachevy.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.benzelbusch.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.bicalautomall.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.bienerford.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.bmwdarien.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.bmwlic.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.bmwnyc.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.bmwofbrooklyn.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.bmwoffreeport.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.bmwofgreenwich.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.bmwofmamaroneck.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.brightbaylincoln.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.brooklynchrysler.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.brooklynsubarudeals.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.brunswickgenesis.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.buickgmcofmahwah.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.bushwickautosales.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.chevroletofwilton.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.chryslerdodgejeepofparamus.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.cityworldford.net",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.cityworldtoyota.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.ct-auto.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.curryacura.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.currytoyota.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.dchbrunswicktoyota.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.dchparamushonda.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.devaninfiniti.com",
+  "platform": "unreachable"
+ },
+ {
+  "host": "www.drivesunrisechevy.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.eastchesterchryslerjeepdodgeram.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.eastcoasttoyota.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.easthillsvw.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.edisoninfiniti.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.fetteinfiniti.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.freedomfordusa.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.gardencityjeepchryslerdodge.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.generationbuickgmc.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.genesisofbrooklyn.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.genesisofwayne.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.glentoyota.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.hassettford.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.hondabronx.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.hondaofstamford.com",
+  "platform": "unreachable"
+ },
+ {
+  "host": "www.hudsonhonda.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.hudsonhyundai.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.hudsontoyota.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.hyundaicityny.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.infinitioflynbrook.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.infinitiofsmithtown.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.infinitiofwhiteplainsauto.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.islandautogroup.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.jaguarmanhattan.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.jaguarparamus.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.jaguarwhiteplains.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.jlrbrooklyn.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.joeheidt.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.johnstarkskia.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.karlchevy.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.karpkia.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.kiabrunswick.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.kiacity.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.kiaofenglewood.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.kiaofwestnyack.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.kingorourkeautogroup.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.kingsinfiniti.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.kingsnissan.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.koeppelhyundai.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.koeppelmazda.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.koeppelsubaru.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.kundertvolvocars.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.landroverenglewood.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.landroverparamus.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.levittownford.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.lexusofbrooklyn.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.lexusofgreenwich.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.lexusofmanhattan.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.lexusofqueens.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.lexusofsmithtown.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.liautocenter.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.libertysubaru.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.lucasford.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.lynnesnissan.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.majorworldchevy.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.malouf.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.malouffordinc.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.manhattanmotorcarsporsche.com",
+  "platform": "http-429"
+ },
+ {
+  "host": "www.maxonhyundai.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.mazdaofvalleystream.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.mbmanhattan.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.mbofmassapequa.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.mbwhiteplains.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.mcguireautogroup.net",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.mercedesbenzparamus.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.merrickdodgechryslerjeep.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.mileasubaru.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.millenniumtoyota.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.mininyc.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.minioffreeport.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.miniofwestchester.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.mybrookvillechevy.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.myislandcdjr.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.myislandchevrolet.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.myislandhyundai.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.myislandvw.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.mymetrohonda.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.newcountrylexusofgreatneck.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.newinsbayshoreford.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.newrochelletoyota.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.nissan112.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.nissancityny.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.nissanfamily.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.nissanofstatenisland.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.nissanofwp.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.nissanofyorktownheights.com",
+  "platform": "unreachable"
+ },
+ {
+  "host": "www.njstateauto.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.northbergenbuickgmc.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.northstarkiany.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.northstarmitsubishi.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.nshonda.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.nutleykia.net",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.nycjeep.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.openroadmazdaofeastbrunswick.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.openroadsubaru.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.openroadvolvocarsedison.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.paragonacura.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.paragonhonda.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.paramuschevrolet.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.paramushyundai.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.parkwaytoyota.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.paulmiller.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.penntoyota.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.performancevw.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.planethondanj.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.plazaautomall.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.plazahonda.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.plazahyundai.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.plazakiany.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.plazatoyota.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.porscheamityville.com",
+  "platform": "http-429"
+ },
+ {
+  "host": "www.porschebrooklyn.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.porschesouthshore.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.porschewhiteplains.com",
+  "platform": "http-429"
+ },
+ {
+  "host": "www.premierfordinc.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.premierfordofbayridge.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.premierlincolnbrooklyn.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.prestigelexus.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.prestigetoyota.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.prestigevwct.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.pristinemitsubishi.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.qualitychevyofenglewood.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.queensborotoyota.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.rallye.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.rallyebmw.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.ramseymazda.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.reydelvw.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.riverdalechryslerjeep.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.riverheadford.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.riversidenissanauto.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.rocklandchryslerjeepdodge.net",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.rocklandnissan.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.route22honda.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.route46nissan.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.sansoneskia.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.shopempirebuickgmcoflic.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.shopempirenissan.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.silverstarny.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.smithhavenchryslerjeepdodge.net",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.smythevolvocars.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.southshorechryslerdodgejeepram.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.southshoremitsubishi.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.stamfordkia.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.stamfordsubaru.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.starchryslerjeepdodge.net",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.starksfordofqueens.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.starnissanofbayside.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.starsubaru.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.stevensjerseycityford.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.sunrisetoyota.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "www.tarrytownhonda.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.tascafordyonkers.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.teddyvolkswagen.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.teterboromotors.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.tomsunionvw.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.toyotacityny.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.toyotaofbayridge.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.toyotaofhackensack.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.toyotaofmanhattan.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.toyotaofmassapequany.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.turnautomall.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.verner-cadbyford.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.victorymitsubishi.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.volkswagenofsmithtown.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.volvocarsglencove.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.volvocarsmanhattan.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.volvocarswhiteplains.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.vwmanhattan.com",
+  "platform": "dealeron"
+ },
+ {
+  "host": "www.vwofwestislip.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.wantaghmitsu.com",
+  "platform": "unreachable"
+ },
+ {
+  "host": "www.waynehyundai.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.waynemazda.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.westburyjeep.com",
+  "platform": "dealer.com"
+ },
+ {
+  "host": "www.westchesterbmw.com",
+  "platform": "http-403"
+ },
+ {
+  "host": "www.westchestertoyota.com",
+  "platform": "other-known"
+ },
+ {
+  "host": "www.yesmaxon.com",
+  "platform": "unknown"
+ },
+ {
+  "host": "yonkershonda.com",
+  "platform": "unknown"
+ }
+]
