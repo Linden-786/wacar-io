@@ -3,9 +3,10 @@
 # it to main, which makes Vercel deploy the fresh data.
 name: Daily inventory crawl
 
+# The schedule is switched off: dealer sites answer GitHub's servers with
+# HTTP 429 (first run, 2026-11-19: 1 of 82 sites readable). Run the crawl from
+# a machine the sites accept (npm run crawl) until that changes.
 on:
-  schedule:
-    - cron: '0 9 * * *' # 09:00 UTC, about 4-5 am in New York
   workflow_dispatch:
 
 permissions:
@@ -48,6 +49,11 @@ jobs:
           echo "Cars for sale: $before -> $after. Sites crawled completely: $trusted" | tee -a "$GITHUB_STEP_SUMMARY"
           if [ "$after" -lt $((before * 7 / 10)) ]; then
             echo "::error::Crawl returned under 70% of yesterday's cars ($after vs $before); not publishing."
+            exit 1
+          fi
+          ok=${trusted%/*}; all=${trusted#*/}
+          if [ "$ok" -lt $((all * 7 / 10)) ]; then
+            echo "::error::Only $trusted sites could be read completely; not publishing."
             exit 1
           fi
 
