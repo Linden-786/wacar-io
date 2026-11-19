@@ -36,3 +36,6 @@ next-env.d.ts
 
 # uncompressed crawler output from local testing
 data/inventory.json
+
+# crawl logs
+logs/

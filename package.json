@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "crawl": "tsx crawler/run.ts",
-    "crawl:probe": "tsx crawler/probe.ts crawler/ny-hosts.txt"
+    "crawl:probe": "tsx crawler/probe.ts crawler/ny-hosts.txt",
+    "crawl:check": "tsx crawler/check.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.4.1",
