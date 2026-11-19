@@ -1,0 +1,62 @@
+# Daily inventory crawl. Re-reads the New York dealer sites, merges the result
+# into data/inventory.json.gz (price history, cars that have left) and commits
+# it to main, which makes Vercel deploy the fresh data.
+name: Daily inventory crawl
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # 09:00 UTC, about 4-5 am in New York
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crawl
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Count cars before
+        id: before
+        run: echo "active=$(node -e "const z=require('zlib'),f=require('fs');const s=JSON.parse(z.gunzipSync(f.readFileSync('data/inventory.json.gz')));console.log(s.listings.filter(l=>!l.goneOn).length)")" >> "$GITHUB_OUTPUT"
+
+      - name: Crawl
+        run: npm run crawl
+
+      # If the runner was blocked or the sites changed, the crawl comes back
+      # thin. Do not publish that: fail so the previous snapshot stays live.
+      - name: Check the result
+        run: |
+          after=$(node -e "const z=require('zlib'),f=require('fs');const s=JSON.parse(z.gunzipSync(f.readFileSync('data/inventory.json.gz')));console.log(s.listings.filter(l=>!l.goneOn).length)")
+          before=${{ steps.before.outputs.active }}
+          trusted=$(node -e "const r=require('./data/crawl-report.json');console.log(r.sites.filter(s=>s.trusted).length+'/'+r.sites.length)")
+          echo "Cars for sale: $before -> $after. Sites crawled completely: $trusted" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$after" -lt $((before * 7 / 10)) ]; then
+            echo "::error::Crawl returned under 70% of yesterday's cars ($after vs $before); not publishing."
+            exit 1
+          fi
+
+      - name: Commit and push
+        run: |
+          if git diff --quiet -- data; then echo "No changes."; exit 0; fi
+          # keep the repository owner's identity so the host accepts the deploy
+          git config user.name "$(git log -1 --format=%an)"
+          git config user.email "$(git log -1 --format=%ae)"
+          git add data/inventory.json.gz data/crawl-report.json
+          git commit -m "Daily inventory crawl $(date -u +%F)"
+          git push origin HEAD:main
